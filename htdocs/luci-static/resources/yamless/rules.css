@@ -117,7 +117,6 @@
 .sr-opt{display:inline-flex;align-items:center;gap:6px;max-width:100%;height:34px;padding:0 14px;border-radius:99px;border:1px solid var(--ln);background:none;color:inherit;font:inherit;font-size:13.5px;cursor:pointer;transition:background var(--f),border-color var(--f),color var(--f)}
 .sr-opt:hover{border-color:var(--a)}
 .sr-opt[aria-pressed=true]{background:var(--as);border-color:transparent;color:var(--a2)}
-.sr-kw-add{color:var(--i3)}.sr-kw{width:17em;max-width:100%;cursor:text;outline:0}.sr-kw:focus{border-color:var(--a)}
 .sr-tip{margin-top:8px}
 .sr-chosen{min-height:26px;align-items:center;margin-bottom:10px}
 .sr-chosen .sr-m{background:var(--as);color:var(--a2)}

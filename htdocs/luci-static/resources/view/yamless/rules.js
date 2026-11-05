@@ -93,9 +93,6 @@ const line = (r, to) => r[0] == 'RULE-SET' ? `RULE-SET,${MINE}${r[1]},${to}` : `
 const ABROAD = T('国外', 'Overseas');
 const starter = auto => ({ subs: [ '' ], groups: [], direct: GEO.map(g => [ 'GEOIP', g[0] ]), rest: { type: auto, m: [ '*' ] }, mirror: 0 });
 const solo = t => t == '*' || t == 'd';   // node choices that stand alone
-// 'k:尼日利亚 NG' is a custom choice: any node whose name has one of these words
-const words = s => s.split(/[\s,，、|]+/).filter(Boolean);
-const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function stateOf(conf) {
 	const l = conf.split('\n').find(l => l.startsWith(TAG));
@@ -236,7 +233,7 @@ return view.extend({
 	// null = every node, '' = no nodes, otherwise a regex the core filters the subscription with
 	filterOf(g) {
 		if (g.m.includes('*')) return null;
-		return g.m.map(t => t[0] == 'r' ? (REG.get(t.slice(2)) || {}).re : t[0] == 'k' ? words(t.slice(2)).map(reEsc).join('|') : '').filter(Boolean).join('|');
+		return g.m.filter(t => t[0] == 'r' && REG.has(t.slice(2))).map(t => REG.get(t.slice(2)).re).join('|');
 	},
 
 	snap() {
@@ -456,8 +453,7 @@ return view.extend({
 		const $ = s => box.querySelector(s), name = $('.sr-nm input'), find = $('.sr-find'), err = $('.sr-err');
 		const paintM = () => {
 			if (dir) return;
-			$('.sr-mem').innerHTML = [ '*', ...REGIONS.map(r => 'r:' + r.key), ...d.m.filter(t => t[0] == 'k'), ...rest ? [ 'd' ] : [] ].map(t => this.opt(t, this.mLabel(t), d.m.includes(t))).join('')
-				+ `<button type="button" class="sr-opt sr-kw-add">${IC.plus}${T('自定义', 'Custom')}</button>`;
+			$('.sr-mem').innerHTML = [ '*', ...REGIONS.map(r => 'r:' + r.key), ...rest ? [ 'd' ] : [] ].map(t => this.opt(t, this.mLabel(t), d.m.includes(t))).join('');
 			$('.sr-how').hidden = d.m.includes('d');
 			$('.sr-types').innerHTML = TYPES.filter(([ v ]) => v != 'smart' || this.smart || v == d.type).map(([ v, l ]) => this.opt(v, l, v == d.type, 'y')).join('');
 			$('.sr-tip').textContent = ((TYPES.find(t => t[0] == d.type) || [])[2] || '') + T(`（${d.type}）`, ` (${d.type})`);
@@ -497,19 +493,6 @@ return view.extend({
 				if (r) { d.m = [ 'r:' + r.key ]; d.type = this.auto; }
 				if (idea) for (const s of idea[2].split(' ')) this.sets.has(s) && !d.r.some(x => x[1] == s) && d.r.push([ 'RULE-SET', s ]);
 				paintM(); paintR();
-			}
-			else if (b.classList.contains('sr-kw-add')) {
-				b.outerHTML = `<input class="sr-opt sr-kw" maxlength="40" autocomplete="off" placeholder="${T('节点名里的词，如 尼日利亚', 'Word in node names, e.g. Nigeria')}">`;
-				const i = $('.sr-kw'), add = () => {
-					if (i.done) return;
-					i.done = 1;
-					const w = words(i.value).join(' ');
-					if (w && !d.m.includes('k:' + w)) d.m = [ ...d.m.filter(x => !solo(x)), 'k:' + w ];
-					paintM();
-				};
-				i.onkeydown = ev => { if (ev.key == 'Enter' || ev.key == 'Escape') { ev.preventDefault(); ev.stopPropagation(); ev.key == 'Enter' ? add() : paintM(); } };
-				i.onblur = () => i.isConnected && add();
-				return i.focus();
 			}
 			else if (b.classList.contains('sr-mx')) { d.r.splice(+b.dataset.i, 1); paintR(); }
 			else if (b.classList.contains('sr-hit')) {
