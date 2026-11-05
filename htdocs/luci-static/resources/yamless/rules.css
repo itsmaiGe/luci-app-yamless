@@ -1,4 +1,4 @@
-/* 分流规则. Uses 7Dollar's colours when that theme is active, neutral ones under any other theme. */
+/* YAMLess. Uses 7Dollar's colours when that theme is active, neutral ones under any other theme. */
 .sr{--s:var(--surface,rgba(128,128,128,.05));--s2:var(--surface-2,rgba(128,128,128,.1));--ln:var(--line-soft,rgba(128,128,128,.2));
   --i2:var(--ink-2,inherit);--i3:var(--ink-3,rgba(128,128,128,.95));--a:var(--accent,#D97757);--a2:var(--accent-2,#B74C29);--as:var(--accent-soft,rgba(217,119,87,.16));
   --ok_:var(--ok,#5F8A55);--oks:var(--ok-soft,rgba(95,138,85,.16));--bd:var(--bad,#C0533E);--bds:var(--bad-soft,rgba(192,83,62,.14));

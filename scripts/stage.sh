@@ -1,5 +1,5 @@
 #!/bin/sh
-# Lay out the installed file tree of luci-app-7rules in $1 (shared by build-ipk.sh and build-apk.sh).
+# Lay out the installed file tree of luci-app-yamless in $1 (shared by build-ipk.sh and build-apk.sh).
 # JS and CSS are minified on the way; the sources in the repo stay readable. MINIFY=0 skips it.
 set -eu
 cd "$(dirname "$0")/.."

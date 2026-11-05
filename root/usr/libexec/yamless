@@ -1,0 +1,33 @@
+#!/bin/sh
+# Helper for the YAMLess page.
+#   yamless core   print "smart" when OpenClash's core can run smart groups (Smart or Oix builds)
+#   yamless apply  let the core check the draft, put it in place, point OpenClash at it and
+#                  restart OpenClash in the background so the page returns at once
+D=/tmp/yamless.yaml F=/etc/openclash/config/yamless.yaml
+
+# The core OpenClash runs: its link once started, else where it keeps it (small-flash mode uses /tmp).
+for C in /etc/openclash/clash /etc/openclash/core/clash_meta /tmp/etc/openclash/core/clash_meta ""; do
+	[ -x "$C" ] && break
+done
+
+case "$1" in
+core)
+	[ -n "$C" ] && "$C" -v 2>/dev/null | grep -qiE 'smart|oix' && echo smart
+	exit 0 ;;
+apply) ;;
+*) exit 2 ;;
+esac
+
+[ -s "$D" ] || exit 1
+if [ -n "$C" ] && ! SAFE_PATHS=/usr/share/openclash:/etc/openclash "$C" -t -d /etc/openclash -f "$D" </dev/null >/tmp/yamless.log 2>&1; then
+	sed -nE 's/.*level=(error|fatal) msg="(.*)".*/\2/p' /tmp/yamless.log | tail -n 1
+	exit 1
+fi
+mkdir -p /etc/openclash/config
+mv "$D" "$F" && rm -f /tmp/yamless.log
+uci -q set openclash.config.config_path="$F"
+uci -q set openclash.config.enable=1
+uci -q commit openclash
+# A plain `&` child keeps rpcd's exec waiting until it times out; detach it fully.
+start-stop-daemon -S -b -x /etc/init.d/openclash -- restart
+echo restarting

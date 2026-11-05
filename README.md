@@ -1,13 +1,13 @@
-<h1 align="center">7Rules · 分流规则</h1>
+<h1 align="center">YAMLess</h1>
 
 <p align="center">
-  只有一个机场订阅链接，也能点几下配好 OpenClash 分流<br>
+  YAML-less：不写 YAML，只有一个机场订阅链接，也能点几下配好 OpenClash 分流<br>
   <sub>From one subscription link to working OpenClash split rules, without writing YAML</sub>
 </p>
 
 <p align="center">
   <img alt="OpenWrt" src="https://img.shields.io/badge/OpenWrt-23.05%20%7C%2024.10%20%7C%2025.12-D97757?style=flat-square">
-  <img alt="Size" src="https://img.shields.io/badge/size-29%20KB-8A7F72?style=flat-square">
+  <img alt="Size" src="https://img.shields.io/badge/size-30%20KB-8A7F72?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-5B6F9A?style=flat-square">
 </p>
 
@@ -23,7 +23,7 @@
 
 机场一般只给一个订阅链接。想让 ChatGPT 走美国节点、YouTube 走香港节点、国内网站直连，原本得自己写配置文件：`proxy-providers`、`proxy-groups`、`rule-providers`、`rules` 四段，写错一个缩进就启动失败。
 
-7Rules 只有两步，全程点选：
+YAMLess 只有两步，全程点选：
 
 | 步骤 | 做什么 |
 | --- | --- |
@@ -36,12 +36,13 @@
 
 - **一个组一张卡**：用哪些节点、哪些网站走它，在同一个地方选好。拖动卡片调整优先级
 - **只预设人人都要的**：局域网和国内网站直连，其余走「国外」（全部节点，自动选最快）。只填订阅就能用；新建分组时可一键填好常用组合（AI、流媒体、社交……）
+- **选法齐全**：手动选、自动选最快、按顺序备用、分摊着用；装了 Smart 内核还有「智能选」，新分组默认就用它
 - **按地区选节点**：香港、日本、美国……按节点名自动筛选，不用逐个挑；机场塞进节点列表的「剩余流量」「到期时间」会被过滤掉
 - **搜索即用**：常用平台带图标；内置 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) 的 660+ 个规则集，支持中文搜索
 - **网址和设备**：粘贴网址自动提取域名；从在线设备里点选，让某台设备全部直连或走代理
 - **不会改坏**：生效前由内核检查配置，没通过就不切换；原来的配置留在 OpenClash 里，随时切回
-- **轻**：安装包 29 KB，只是一个网页，没有后台进程。只有点「保存并生效」时路由器才干活
-- **兼容**：OpenClash 的 Meta（mihomo）内核；任何 LuCI 主题下都能用，配合 [7Dollar](https://github.com/itsmaiGe/luci-theme-7dollar) 主题效果最好
+- **轻**：安装包 30 KB，只是一个网页，没有后台进程。只有点「保存并生效」时路由器才干活
+- **兼容**：OpenClash 的 Meta（mihomo）和 Smart 内核；任何 LuCI 主题下都能用，配合 [7Dollar](https://github.com/itsmaiGe/luci-theme-7dollar) 主题效果最好
 
 <p align="center">
   <img src="docs/subs.webp" alt="订阅" width="49%">
@@ -56,10 +57,10 @@
 
 适用于 23.05 / 24.10。
 
-1. 下载安装包：[luci-app-7rules_0.3.0-r1_all.ipk](https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules_0.3.0-r1_all.ipk)
+1. 下载安装包：[luci-app-yamless_0.3.0-r1_all.ipk](https://github.com/itsmaiGe/luci-app-yamless/releases/latest/download/luci-app-yamless_0.3.0-r1_all.ipk)
 2. 浏览器打开路由器后台（通常是 `192.168.1.1`），登录
 3. 点 **系统 → 软件包 → 上传软件包…**，选择刚下载的文件，点 **上传**，再点 **安装**
-4. 刷新页面，在 **服务 → 分流规则** 里打开（7Dollar 主题在「应用」里）
+4. 刷新页面，在 **服务 → YAMLess** 里打开（7Dollar 主题在「应用」里）
 
 ### 方法二：命令行
 
@@ -67,10 +68,10 @@ SSH 登录路由器（`ssh root@192.168.1.1`）后粘贴：
 
 ```sh
 # OpenWrt 23.05 / 24.10
-cd /tmp && wget -O 7rules.ipk https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules_0.3.0-r1_all.ipk && opkg install 7rules.ipk
+cd /tmp && wget -O yamless.ipk https://github.com/itsmaiGe/luci-app-yamless/releases/latest/download/luci-app-yamless_0.3.0-r1_all.ipk && opkg install yamless.ipk
 
 # OpenWrt 25.x
-cd /tmp && wget -O 7rules.apk https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules-0.3.0-r1.apk && apk add --allow-untrusted 7rules.apk
+cd /tmp && wget -O yamless.apk https://github.com/itsmaiGe/luci-app-yamless/releases/latest/download/luci-app-yamless-0.3.0-r1.apk && apk add --allow-untrusted yamless.apk
 ```
 
 路由器连不上 GitHub 时，用方法一：先在电脑上下载，再上传。
@@ -99,7 +100,7 @@ cd /tmp && wget -O 7rules.apk https://github.com/itsmaiGe/luci-app-7rules/releas
 
 <br>
 
-打开 OpenClash → **配置文件管理**，选回原来的配置，启动即可。7Rules 生成的配置叫 `7rules.yaml`，留在那里不影响。
+打开 OpenClash → **配置文件管理**，选回原来的配置，启动即可。YAMLess 生成的配置叫 `yamless.yaml`，留在那里不影响。
 </details>
 
 <details>
@@ -126,8 +127,8 @@ cd /tmp && wget -O 7rules.apk https://github.com/itsmaiGe/luci-app-7rules/releas
 在 OpenWrt 源码或 SDK 中：
 
 ```sh
-git clone https://github.com/itsmaiGe/luci-app-7rules.git package/luci-app-7rules
-make package/luci-app-7rules/compile V=s
+git clone https://github.com/itsmaiGe/luci-app-yamless.git package/luci-app-yamless
+make package/luci-app-yamless/compile V=s
 ```
 
 不用 SDK 时，在 macOS / Linux 上运行 `./scripts/build-ipk.sh`（需要 Node.js）。规则集列表每月由 GitHub Actions 从 blackmatrix7 更新（`scripts/gen-sets.mjs`），中文搜索词在 `scripts/aliases.txt`，欢迎补充。
@@ -138,7 +139,7 @@ make package/luci-app-7rules/compile V=s
 | | |
 | --- | --- |
 | OpenWrt | 23.05、24.10（ipk），25.x（apk） |
-| OpenClash | Meta（mihomo）内核 |
+| OpenClash | Meta（mihomo）内核、Smart 内核 |
 | 订阅格式 | 内核能读的都行：Clash / mihomo 订阅，或常见的分享链接订阅 |
 | 浏览器 | 2023 年以后的 Chrome / Edge / Safari / Firefox |
 | 已测试 | Cudy TR3000 · OpenWrt 24.10.5 · OpenClash 0.48 · mihomo 1.19 |
@@ -151,9 +152,9 @@ make package/luci-app-7rules/compile V=s
 
 ## English
 
-7Rules is a LuCI page for OpenClash that takes you from a single subscription link to a working config in two steps: paste the link, then make groups. Each group card holds which nodes it uses (all or by region; pick / fastest / failover) and what goes through it (660+ rule sets from blackmatrix7/ios_rule_script, URLs or devices). Drag cards to set priority; by default the local network and China go direct and everything else uses an "Overseas" group with all nodes. Applying writes one complete config, has the core check it, then switches OpenClash to it; your old config stays. 29 KB, no background process.
+YAMLess is a LuCI page for OpenClash that takes you from a single subscription link to a working config in two steps: paste the link, then make groups. Each group card holds which nodes it uses (all or by region; pick / fastest / failover / load-balance, plus smart with the Smart core) and what goes through it (660+ rule sets from blackmatrix7/ios_rule_script, URLs or devices). Drag cards to set priority; by default the local network and China go direct and everything else uses an "Overseas" group with all nodes. Applying writes one complete config, has the core check it, then switches OpenClash to it; your old config stays. 30 KB, no background process.
 
-Install: download the ipk (OpenWrt 23.05 / 24.10) or apk (25.x) from [Releases](https://github.com/itsmaiGe/luci-app-7rules/releases) and upload it under **System → Software**. The page is at **Services → 分流规则**.
+Install: download the ipk (OpenWrt 23.05 / 24.10) or apk (25.x) from [Releases](https://github.com/itsmaiGe/luci-app-yamless/releases) and upload it under **System → Software**. The page is at **Services → YAMLess**.
 
 ## License
 

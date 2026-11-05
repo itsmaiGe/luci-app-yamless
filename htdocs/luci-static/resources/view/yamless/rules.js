@@ -4,17 +4,17 @@
 'require uci';
 'require ui';
 
-/* 分流规则: paste the subscription link, then make groups. Each group says which nodes it uses
+/* YAMLess: paste the subscription link, then make groups. Each group says which nodes it uses
    and what goes through it. The page writes one complete config for OpenClash when you apply.
    Nothing runs in the background; the router only works when you press Save. */
 
 const ZH = /^zh/i.test(document.documentElement.lang || '');
 const T = (zh, en) => ZH ? zh : en;
-const CONF = '/etc/openclash/config/7rules.yaml';
-const DRAFT = '/tmp/7rules.yaml';
-const APPLY = '/usr/libexec/7rules-apply';
-const TAG = '# 7rules: ';
-const MINE = '7r-';                    // prefix of the rule sets this page owns
+const CONF = '/etc/openclash/config/yamless.yaml';
+const DRAFT = '/tmp/yamless.yaml';
+const BIN = '/usr/libexec/yamless';
+const TAG = '# yamless: ';
+const MINE = 'ya-';                    // prefix of the rule sets this page owns
 const LINK = /^https?:\/\/\S+$/i;
 const PROBE = 'https://www.gstatic.com/generate_204';
 const JUNK = '剩余|到期|过期|官网|Expire|Traffic|Remaining';   // info lines airports list as nodes
@@ -41,11 +41,15 @@ const REGIONS = [
 	[ 'de', T('德国', 'Germany'), '德国|DE|Germany|Frankfurt|🇩🇪' ]
 ].map(([ key, name, re ]) => ({ key, name, re }));
 const REG = new Map(REGIONS.map(r => [ r.key, r ]));
+// Every group type OpenClash's cores know. "smart" only exists in the Smart (and Oix) core builds.
 const TYPES = [
 	[ 'select', T('手动选', 'Pick'), T('在 OpenClash 面板里自己点选节点', 'You choose the node in the OpenClash dashboard') ],
 	[ 'url-test', T('自动选最快', 'Fastest'), T('定时测速，自动用最快的', 'Tests regularly and uses the fastest') ],
-	[ 'fallback', T('按顺序备用', 'Failover'), T('用第一个，坏了自动换下一个', 'Uses the first; moves on when it fails') ]
+	[ 'smart', T('智能选', 'Smart'), T('记住每个网站用哪个节点最顺，自动挑', 'Learns which node works best for each site') ],
+	[ 'fallback', T('按顺序备用', 'Failover'), T('用第一个，坏了自动换下一个', 'Uses the first; moves on when it fails') ],
+	[ 'load-balance', T('分摊着用', 'Share'), T('几个节点一起分担流量，适合大量下载', 'Spreads traffic over several nodes; good for big downloads') ]
 ];
+const typeName = t => (TYPES.find(x => x[0] == t) || [ , t ])[1];
 // Built in to the core, nothing to download.
 const GEO = [ [ 'LAN', T('局域网', 'Local network'), 'lan local 局域网 内网 本地' ], [ 'CN', T('国内网站', 'Sites in China'), 'cn china 国内 中国 大陆 直连' ] ];
 // Name ideas for a new group, with what they usually hold.
@@ -73,7 +77,9 @@ const IC = {
 	search: svg('m20 20-4.5-4.5M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z'),
 	select: svg('M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01'),
 	'url-test': svg('M13 3 4 14h7l-1 7 9-11h-7l1-7Z'),
-	fallback: svg('m12 3 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5')
+	smart: svg('M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.5l-1.9-5.7-5.6-1.9L10.1 9 12 3.5Z'),
+	fallback: svg('m12 3 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5'),
+	'load-balance': svg('M4 12h5m0 0 4-5h7m-11 5 4 5h7m-3-13 3 3-3 3m0 4 3 3-3 3')
 };
 
 /* A rule is [ type, value, note? ]; the group it sits in decides where it goes. */
@@ -84,7 +90,7 @@ const line = (r, to) => r[0] == 'RULE-SET' ? `RULE-SET,${MINE}${r[1]},${to}` : `
 
 // Only what everyone needs: home network and China go direct, the rest goes abroad on any node.
 const ABROAD = T('国外', 'Overseas');
-const starter = () => ({ subs: [ '' ], groups: [ { name: ABROAD, type: 'url-test', m: [ '*' ] } ], direct: GEO.map(g => [ 'GEOIP', g[0] ]), final: ABROAD, mirror: 0 });
+const starter = auto => ({ subs: [ '' ], groups: [ { name: ABROAD, type: auto, m: [ '*' ] } ], direct: GEO.map(g => [ 'GEOIP', g[0] ]), final: ABROAD, mirror: 0 });
 
 function stateOf(conf) {
 	const l = conf.split('\n').find(l => l.startsWith(TAG));
@@ -98,9 +104,9 @@ return view.extend({
 
 	load() {
 		const css = new Promise(ok => {
-			if (document.querySelector('link[data-7rules]')) return ok();
-			const l = document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: L.resource('7rules/rules.css') }));
-			l.setAttribute('data-7rules', '');
+			if (document.querySelector('link[data-yamless]')) return ok();
+			const l = document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'stylesheet', href: L.resource('yamless/rules.css') }));
+			l.setAttribute('data-yamless', '');
 			l.onload = l.onerror = ok;
 		});
 		return Promise.all([
@@ -108,12 +114,13 @@ return view.extend({
 			uci.load('dhcp').catch(() => null),
 			fs.read(CONF).catch(() => ''),
 			fs.read('/tmp/dhcp.leases').catch(() => ''),
-			fetch(L.resource('7rules/sets.json'), { cache: 'no-cache' }).then(r => r.json()).catch(() => ({ s: [] })),
+			fetch(L.resource('yamless/sets.json'), { cache: 'no-cache' }).then(r => r.json()).catch(() => ({ s: [] })),
+			fs.exec(BIN, [ 'core' ]).then(r => r.stdout || '').catch(() => ''),
 			css
 		]);
 	},
 
-	render([ oc, , conf, leases, sets ]) {
+	render([ oc, , conf, leases, sets, core ]) {
 		const root = document.createElement('div');
 		root.className = 'sr';
 		this.root = root;
@@ -128,13 +135,16 @@ return view.extend({
 		this.fixed = new Set(uci.sections('dhcp', 'host').map(s => s.ip).filter(Boolean));
 		this.ocSubs = uci.sections('openclash', 'config_subscribe').filter(s => LINK.test(s.address || ''));
 		this.using = uci.get('openclash', 'config', 'config_path') || '';
+		// Smart core in place, or switched on in OpenClash (which then fetches it on start)
+		this.smart = /smart/.test(core) || uci.get('openclash', 'config', 'smart_enable') == '1';
+		this.auto = this.smart ? 'smart' : 'url-test';
 		const st = stateOf(conf);
 		this.saved = !!st;
-		this.load2(st || starter());
+		this.load2(st || starter(this.auto));
 		this.base = st ? this.build() : null;
 		this.step = st ? 1 : 0;
 
-		root.innerHTML = `<div class="sr-head"><div><h2>${T('分流规则', 'Split rules')}</h2>
+		root.innerHTML = `<div class="sr-head"><div><h2>YAMLess</h2>
 				<p>${T('粘贴机场订阅，再建几个分组：每组用哪些节点、哪些网站走它。', 'Paste your subscription, then make groups: which nodes each uses and what goes through it.')}</p></div>
 				<span class="sr-chip ok sr-live"${this.using == CONF ? '' : ' hidden'}>${T('使用中', 'In use')}</span></div>
 			<ol class="sr-steps"></ol>
@@ -143,7 +153,7 @@ return view.extend({
 				<span class="sr-bar-b"><button type="button" class="btn sr-undo">${T('撤销', 'Undo')}</button><button type="button" class="btn cbi-button-apply sr-save">${T('保存并生效', 'Save & apply')}</button></span></div>`;
 
 		root.querySelector('.sr-steps').onclick = ev => { const b = ev.target.closest('[data-step]'); b && this.go(+b.dataset.step); };
-		root.querySelector('.sr-undo').onclick = () => { this.load2(stateOf(this.base) || starter()); this.paint(); };
+		root.querySelector('.sr-undo').onclick = () => { this.load2(stateOf(this.base) || starter(this.auto)); this.paint(); };
 		root.querySelector('.sr-save').onclick = ev => this.save(ev.currentTarget);
 		this.wire(root.querySelector('.sr-body'));
 		this.paint();
@@ -232,7 +242,7 @@ return view.extend({
 
 	build() {
 		const subs = this.subs.filter(Boolean), use = subs.map((u, i) => 'sub' + (i + 1)).join(', ');
-		const prov = subs.map((u, i) => [ `  sub${i + 1}:`, '    type: http', `    url: ${q(u)}`, `    path: ./proxy_provider/7rules-${i + 1}.yaml`,
+		const prov = subs.map((u, i) => [ `  sub${i + 1}:`, '    type: http', `    url: ${q(u)}`, `    path: ./proxy_provider/yamless-${i + 1}.yaml`,
 			'    interval: 21600', `    exclude-filter: ${q('(?i)' + JUNK)}`, '    header:', '      User-Agent: [clash.meta]',
 			'    health-check:', '      enable: true', `      url: ${PROBE}`, '      interval: 600', '      lazy: true' ].join('\n'));
 		const groups = this.groups.map(g => {
@@ -245,7 +255,7 @@ return view.extend({
 			.flatMap(([ rs, to ]) => rs.map(r => [ r, to ])).sort((a, b) => rank(a[0]) - rank(b[0]));
 		const sets = [ ...new Set(all.filter(([ r ]) => r[0] == 'RULE-SET').map(([ r ]) => r[1])) ];
 		return [ TAG + JSON.stringify(this.snap()),
-			T('# 由「分流规则」页面生成，请在那里修改', '# Written by the Split rules page; edit it there'),
+			T('# 由 YAMLess 生成，请在那里修改', '# Written by YAMLess; edit it there'),
 			'mode: rule',
 			'dns:', '  enable: true', '  default-nameserver: [223.5.5.5, 119.29.29.29]',
 			'  nameserver: [https://dns.alidns.com/dns-query, https://doh.pub/dns-query]',
@@ -262,6 +272,8 @@ return view.extend({
 		if (!this.valid()) return [ 0, T('先填好订阅链接', 'Fill in the subscription link first') ];
 		const g = this.groups.find(g => !g.m.length);
 		if (g) return [ 1, T(`「${g.name}」还没选节点`, `"${g.name}" has no nodes`) ];
+		const s = !this.smart && this.groups.find(g => g.type == 'smart');
+		if (s) return [ 1, T(`「${s.name}」的智能选要 Smart 内核，换一种选法，或在 OpenClash 里打开 Smart 内核`, `"${s.name}" uses Smart, which needs the Smart core; pick another way or turn the Smart core on in OpenClash`) ];
 	},
 
 	async save(btn) {
@@ -271,7 +283,7 @@ return view.extend({
 		btn.disabled = true;
 		try {
 			await fs.write(DRAFT, text);
-			const r = await fs.exec(APPLY);
+			const r = await fs.exec(BIN, [ 'apply' ]);
 			if (r.code) throw new Error((r.stdout || r.stderr || '').trim() || 'exit ' + r.code);
 			this.base = text;
 			this.saved = true;
@@ -364,7 +376,7 @@ return view.extend({
 		return `<div class="sr-card sr-g" data-k="${g.k}">
 			<button type="button" class="sr-grip" aria-label="${T('拖动排序', 'Drag to reorder')}">${IC.grip}</button>
 			<button type="button" class="sr-open"><span class="sr-ic k-g">${IC[g.type]}</span>
-				<span class="sr-t"><b>${esc(g.name)}${this.final == g.name ? ` <span class="sr-chip">${T('其他所有', 'Everything else')}</span>` : ''}</b><small>${TYPES.find(t => t[0] == g.type)[1]}</small>
+				<span class="sr-t"><b>${esc(g.name)}${this.final == g.name ? ` <span class="sr-chip">${T('其他所有', 'Everything else')}</span>` : ''}</b><small>${typeName(g.type)}</small>
 					${this.chips(T('节点', 'Nodes'), g.m, `<span class="sr-chip bad">${T('还没选', 'Not chosen')}</span>`)}${this.chips(T('规则', 'Rules'), g.r)}</span></button>
 			<button type="button" class="sr-x" aria-label="${T('删除', 'Delete')}">${IC.x}</button></div>`;
 	},
@@ -373,7 +385,7 @@ return view.extend({
 		const [ t, v, n ] = r;
 		if (t == 'RULE-SET') {
 			const s = this.sets.get(v);
-			return { kind: BRAND.has(v) ? 'set brand' : 'set', ic: BRAND.has(v) ? `<svg class="b"><use href="${L.resource('7rules/icons.svg')}#${v}"/></svg>` : `<i>${esc(v[0])}</i>`, title: v, label: s && s.label, sub: T('规则集', 'Rule set') + (s && s.kb >= BIG ? T(` · 较大（${s.kb} KB），多占些内存`, ` · large (${s.kb} KB)`) : '') };
+			return { kind: BRAND.has(v) ? 'set brand' : 'set', ic: BRAND.has(v) ? `<svg class="b"><use href="${L.resource('yamless/icons.svg')}#${v}"/></svg>` : `<i>${esc(v[0])}</i>`, title: v, label: s && s.label, sub: T('规则集', 'Rule set') + (s && s.kb >= BIG ? T(` · 较大（${s.kb} KB），多占些内存`, ` · large (${s.kb} KB)`) : '') };
 		}
 		if (t == 'GEOIP') {
 			const g = GEO.find(g => g[0] == v);
@@ -443,8 +455,8 @@ return view.extend({
 		const paintM = () => {
 			if (dir) return;
 			$('.sr-mem').innerHTML = [ [ '*', T('全部节点', 'All nodes') ], ...REGIONS.map(r => [ 'r:' + r.key, r.name ]) ].map(([ t, l ]) => this.opt(t, l, d.m.includes(t))).join('');
-			$('.sr-types').innerHTML = TYPES.map(([ v, l ]) => this.opt(v, l, v == d.type, 'y')).join('');
-			$('.sr-tip').textContent = TYPES.find(t => t[0] == d.type)[2];
+			$('.sr-types').innerHTML = TYPES.filter(([ v ]) => v != 'smart' || this.smart || v == d.type).map(([ v, l ]) => this.opt(v, l, v == d.type, 'y')).join('');
+			$('.sr-tip').textContent = (TYPES.find(t => t[0] == d.type) || [])[2] || '';
 		};
 		let list = [];
 		const paintR = () => {
@@ -477,7 +489,7 @@ return view.extend({
 			else if (n) {
 				name.value = n;
 				const r = REGIONS.find(r => r.name == n), idea = IDEAS.find(i => T(i[0], i[1]) == n);
-				if (r) { d.m = [ 'r:' + r.key ]; d.type = 'url-test'; }
+				if (r) { d.m = [ 'r:' + r.key ]; d.type = this.auto; }
 				if (idea) for (const s of idea[2].split(' ')) this.sets.has(s) && !d.r.some(x => x[1] == s) && d.r.push([ 'RULE-SET', s ]);
 				paintM(); paintR();
 			}

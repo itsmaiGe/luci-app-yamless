@@ -1,11 +1,11 @@
 #!/bin/sh
-# Build dist/luci-app-7rules-<version>.apk for OpenWrt 25.x (apk-tools v3).
+# Build dist/luci-app-yamless-<version>.apk for OpenWrt 25.x (apk-tools v3).
 # Needs apk-tools v3 (`apk mkpkg`, set APK=/path/to/apk.static) and runs as root so files are
 # owned by root; .github/workflows/build.yml does both.
 set -eu
 cd "$(dirname "$0")/.."
 
-NAME=luci-app-7rules
+NAME=luci-app-yamless
 VER=$(sed -n 's/^PKG_VERSION:=//p' Makefile)-r$(sed -n 's/^PKG_RELEASE:=//p' Makefile)
 OUT=dist/$NAME-$VER.apk
 # Stamp files with the last commit that touched the package, so an unchanged source gives a byte-identical apk.
@@ -55,7 +55,7 @@ rm -f dist/$NAME-*.apk
 ${APK:-apk} mkpkg \
 	--info "name:$NAME" \
 	--info "version:$VER" \
-	--info "description:7Rules, visual split rules for OpenClash" \
+	--info "description:YAMLess, visual split rules for OpenClash" \
 	--info "arch:noarch" \
 	--info "license:Apache-2.0" \
 	--info "origin:$NAME" \

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Build dist/luci-app-7rules_<version>_all.ipk without an OpenWrt SDK.
+# Build dist/luci-app-yamless_<version>_all.ipk without an OpenWrt SDK.
 # The result is a standard opkg package (tar.gz flavour, like ipkg-build).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VER=$(sed -n 's/^PKG_VERSION:=//p' Makefile)-r$(sed -n 's/^PKG_RELEASE:=//p' Makefile)
-NAME=luci-app-7rules
+NAME=luci-app-yamless
 OUT=dist/${NAME}_${VER}_all.ipk
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
@@ -32,7 +32,7 @@ URL: https://github.com/itsmaiGe/$NAME
 Maintainer: itsmaiGe
 Architecture: all
 Installed-Size: $((SIZE * 1024))
-Description: 7Rules: visual split rules for OpenClash. Paste a subscription
+Description: YAMLess: visual split rules for OpenClash. Paste a subscription
  link, make groups, pick where each service goes. No YAML.
 CTL
 cat > "$C/postinst" <<'SH'

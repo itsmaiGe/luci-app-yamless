@@ -1,13 +1,13 @@
 {
-	"luci-app-7rules": {
-		"description": "Grant access to the 分流规则 (split rules) page",
+	"luci-app-yamless": {
+		"description": "Grant access to YAMLess",
 		"read": {
 			"ubus": {
 				"file": [ "read" ],
 				"uci": [ "get" ]
 			},
 			"file": {
-				"/etc/openclash/config/7rules.yaml": [ "read" ],
+				"/etc/openclash/config/yamless.yaml": [ "read" ],
 				"/tmp/dhcp.leases": [ "read" ]
 			},
 			"uci": [ "openclash", "dhcp" ]
@@ -17,8 +17,8 @@
 				"file": [ "write", "exec" ]
 			},
 			"file": {
-				"/tmp/7rules.yaml": [ "write" ],
-				"/usr/libexec/7rules-apply": [ "exec" ]
+				"/tmp/yamless.yaml": [ "write" ],
+				"/usr/libexec/yamless": [ "exec" ]
 			}
 		}
 	}

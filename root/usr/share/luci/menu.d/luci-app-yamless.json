@@ -1,0 +1,14 @@
+{
+	"admin/services/yamless": {
+		"title": "YAMLess",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "yamless/rules"
+		},
+		"depends": {
+			"acl": [ "luci-app-yamless" ],
+			"uci": { "openclash": true }
+		}
+	}
+}

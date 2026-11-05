@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Rebuild htdocs/.../7rules/sets.json: every Clash rule set in blackmatrix7/ios_rule_script,
+// Rebuild htdocs/.../yamless/sets.json: every Clash rule set in blackmatrix7/ios_rule_script,
 // which file to use, its size, and the Chinese search words from aliases.txt.
 // Entry: [name, file, kb, label?, words?]  file: 0 N_No_Resolve.yaml 1 N.yaml 2 N_Classical_No_Resolve.yaml 3 N_Classical.yaml
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const here = new URL('.', import.meta.url);
-const out = new URL('../htdocs/luci-static/resources/7rules/sets.json', here);
+const out = new URL('../htdocs/luci-static/resources/yamless/sets.json', here);
 const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
 const res = await fetch('https://api.github.com/repos/blackmatrix7/ios_rule_script/git/trees/master?recursive=1',
 	{ headers: token ? { authorization: `Bearer ${token}` } : {} });
