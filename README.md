@@ -15,9 +15,7 @@
   <a href="#安装">安装</a> · <a href="#使用">使用</a> · <a href="#常见问题">常见问题</a> · <a href="#english">English</a>
 </p>
 
-<p align="center">
-  <a href="docs/promo.mp4"><img src="docs/promo.webp" alt="宣传视频" width="100%"></a>
-</p>
+https://github.com/user-attachments/assets/00a902a9-4297-4b16-9dfd-7b40e5e1f141
 
 ## 为什么做它
 
