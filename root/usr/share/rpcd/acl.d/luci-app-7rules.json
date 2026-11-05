@@ -8,7 +8,6 @@
 			},
 			"file": {
 				"/etc/openclash/config/7rules.yaml": [ "read" ],
-				"/etc/openclash/proxy_provider/7rules-*": [ "read" ],
 				"/tmp/dhcp.leases": [ "read" ]
 			},
 			"uci": [ "openclash", "dhcp" ]
@@ -19,7 +18,6 @@
 			},
 			"file": {
 				"/tmp/7rules.yaml": [ "write" ],
-				"/usr/libexec/7rules-fetch *": [ "exec" ],
 				"/usr/libexec/7rules-apply": [ "exec" ]
 			}
 		}

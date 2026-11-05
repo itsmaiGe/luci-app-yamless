@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="OpenWrt" src="https://img.shields.io/badge/OpenWrt-23.05%20%7C%2024.10%20%7C%2025.12-D97757?style=flat-square">
-  <img alt="Size" src="https://img.shields.io/badge/size-27%20KB-8A7F72?style=flat-square">
+  <img alt="Size" src="https://img.shields.io/badge/size-23%20KB-8A7F72?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-5B6F9A?style=flat-square">
 </p>
 
@@ -23,29 +23,29 @@
 
 机场一般只给一个订阅链接。想让 ChatGPT 走美国节点、YouTube 走香港节点、国内网站直连，原本得自己写配置文件：`proxy-providers`、`proxy-groups`、`rule-providers`、`rules` 四段，写错一个缩进就启动失败。
 
-7Rules 把这件事拆成三步，全程点选：
+7Rules 只有两步，全程点选：
 
 | 步骤 | 做什么 |
 | --- | --- |
-| **1 订阅** | 粘贴链接，读出节点、地区、剩余流量和到期时间 |
-| **2 分组** | 按地区、单个节点或其他分组组合；手动选、自动选最快、按顺序备用 |
-| **3 规则** | 搜「油管」「ChatGPT」，选走哪个组；拖动调整先后 |
+| **1 订阅** | 粘贴链接。填好才能进下一步 |
+| **2 分组** | 新建一个组（比如「AI」），上面选用哪些节点（美国、香港……），下面搜「ChatGPT」「Claude」放进来 |
 
 点 **保存并生效**，它会生成一份完整的 OpenClash 配置，先让内核检查一遍，没问题才切换过去。
 
 ## 特性
 
-- **开箱即用**：自带常用分组（节点选择、自动选择、AI、流媒体）和规则（局域网、AI、油管、网飞、国内直连），只填订阅也能直接用
-- **识别地区**：香港、日本、美国……自动归类；机场塞进节点列表的「剩余流量」「到期时间」会被过滤掉
+- **一个组一张卡**：用哪些节点、哪些网站走它，在同一个地方选好。拖动卡片调整优先级
+- **只预设人人都要的**：局域网和国内网站直连，其余由你决定；新建分组时可一键填好常用组合（AI、流媒体、社交……）
+- **按地区选节点**：香港、日本、美国……按节点名自动筛选，不用逐个挑；机场塞进节点列表的「剩余流量」「到期时间」会被过滤掉
 - **搜索即用**：内置 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) 的 660+ 个规则集，支持中文搜索
 - **网址和设备**：粘贴网址自动提取域名；从在线设备里点选，让某台设备全部直连或走代理
 - **不会改坏**：生效前由内核检查配置，没通过就不切换；原来的配置留在 OpenClash 里，随时切回
-- **轻**：安装包 27 KB，只是一个网页，没有后台进程。只有点「读取节点」和「保存并生效」时路由器才干活
+- **轻**：安装包 23 KB，只是一个网页，没有后台进程。只有点「保存并生效」时路由器才干活
 - **兼容**：OpenClash 的 Meta（mihomo）内核；任何 LuCI 主题下都能用，配合 [7Dollar](https://github.com/itsmaiGe/luci-theme-7dollar) 主题效果最好
 
 <p align="center">
   <img src="docs/subs.webp" alt="订阅" width="49%">
-  <img src="docs/rules.webp" alt="规则" width="49%">
+  <img src="docs/edit.webp" alt="编辑分组" width="49%">
 </p>
 
 ## 安装
@@ -56,7 +56,7 @@
 
 适用于 23.05 / 24.10。
 
-1. 下载安装包：[luci-app-7rules_0.2.0-r1_all.ipk](https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules_0.2.0-r1_all.ipk)
+1. 下载安装包：[luci-app-7rules_0.3.0-r1_all.ipk](https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules_0.3.0-r1_all.ipk)
 2. 浏览器打开路由器后台（通常是 `192.168.1.1`），登录
 3. 点 **系统 → 软件包 → 上传软件包…**，选择刚下载的文件，点 **上传**，再点 **安装**
 4. 刷新页面，在 **服务 → 分流规则** 里打开（7Dollar 主题在「应用」里）
@@ -67,19 +67,19 @@ SSH 登录路由器（`ssh root@192.168.1.1`）后粘贴：
 
 ```sh
 # OpenWrt 23.05 / 24.10
-cd /tmp && wget -O 7rules.ipk https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules_0.2.0-r1_all.ipk && opkg install 7rules.ipk
+cd /tmp && wget -O 7rules.ipk https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules_0.3.0-r1_all.ipk && opkg install 7rules.ipk
 
 # OpenWrt 25.x
-cd /tmp && wget -O 7rules.apk https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules-0.2.0-r1.apk && apk add --allow-untrusted 7rules.apk
+cd /tmp && wget -O 7rules.apk https://github.com/itsmaiGe/luci-app-7rules/releases/latest/download/luci-app-7rules-0.3.0-r1.apk && apk add --allow-untrusted 7rules.apk
 ```
 
 路由器连不上 GitHub 时，用方法一：先在电脑上下载，再上传。
 
 ## 使用
 
-1. **订阅**：粘贴机场给的订阅链接，点 **读取节点**
-2. **分组**：默认分组已经够用。想要「香港自动选最快」，点 **新建分组 → 香港**
-3. **规则**：点 **添加**，搜索服务名、粘贴网址或选设备，再选走哪个组
+1. **订阅**：粘贴机场给的订阅链接，点 **下一步**
+2. **分组**：点 **新建分组**，起个名字，选用哪些节点，再搜索要走这个组的服务、网址或设备
+3. 底部 **其他所有** 选一个组，没对上任何规则的流量走它
 4. 点 **保存并生效**。OpenClash 会重启，断网几秒
 
 「手动选」的分组，在 OpenClash 的控制面板里点选节点。
@@ -87,19 +87,11 @@ cd /tmp && wget -O 7rules.apk https://github.com/itsmaiGe/luci-app-7rules/releas
 ## 常见问题
 
 <details>
-<summary><b>读取节点失败</b></summary>
+<summary><b>生效后没有节点</b></summary>
 
 <br>
 
-检查链接是否完整。有的机场要求在后台把订阅格式选成 Clash；也可能是路由器连不上机场，换个时间再试。读取失败不影响保存，OpenClash 启动时会自己再下载一次。
-</details>
-
-<details>
-<summary><b>分组显示「订阅里没有匹配的节点」</b></summary>
-
-<br>
-
-比如建了「日本」组，但订阅里没有名字带「日本 / JP / Tokyo」的节点。点「添加」改选别的地区或单个节点。
+订阅由 OpenClash 自己下载。检查链接是否完整；有的机场要求在后台把订阅格式选成 Clash。如果某个组选了「日本」，但订阅里没有名字带「日本 / JP / Tokyo」的节点，这个组会是空的，改选别的地区或「全部节点」。
 </details>
 
 <details>
@@ -115,11 +107,11 @@ cd /tmp && wget -O 7rules.apk https://github.com/itsmaiGe/luci-app-7rules/releas
 
 <br>
 
-在「规则」这一步底部打开 **更多 → 规则集下载地址**，换一个地址后保存。
+在「分组」这一步底部打开 **更多 → 规则集下载地址**，换一个地址后保存。
 </details>
 
 <details>
-<summary><b>设备规则显示「IP 会变」</b></summary>
+<summary><b>设备提示「建议设为静态」</b></summary>
 
 <br>
 
@@ -147,7 +139,7 @@ make package/luci-app-7rules/compile V=s
 | --- | --- |
 | OpenWrt | 23.05、24.10（ipk），25.x（apk） |
 | OpenClash | Meta（mihomo）内核 |
-| 订阅格式 | Clash / mihomo 订阅，或常见的分享链接订阅（ss、vmess、vless、trojan、hysteria2…） |
+| 订阅格式 | 内核能读的都行：Clash / mihomo 订阅，或常见的分享链接订阅 |
 | 浏览器 | 2023 年以后的 Chrome / Edge / Safari / Firefox |
 | 已测试 | Cudy TR3000 · OpenWrt 24.10.5 · OpenClash 0.48 · mihomo 1.19 |
 
@@ -158,7 +150,7 @@ make package/luci-app-7rules/compile V=s
 
 ## English
 
-7Rules is a LuCI page for OpenClash that takes you from a single subscription link to a working config in three steps: paste the link (nodes, regions, traffic and expiry are read for you), sort nodes into groups (by region, single nodes or other groups; pick / fastest / failover), and route services to groups (660+ rule sets from blackmatrix7/ios_rule_script, URLs or devices; drag to reorder). Applying writes one complete config, has the core check it, then switches OpenClash to it; your old config stays. 27 KB, no background process.
+7Rules is a LuCI page for OpenClash that takes you from a single subscription link to a working config in two steps: paste the link, then make groups. Each group card holds which nodes it uses (all, by region, or other groups; pick / fastest / failover) and what goes through it (660+ rule sets from blackmatrix7/ios_rule_script, URLs or devices). Drag cards to set priority; local network and China go direct by default. Applying writes one complete config, has the core check it, then switches OpenClash to it; your old config stays. 23 KB, no background process.
 
 Install: download the ipk (OpenWrt 23.05 / 24.10) or apk (25.x) from [Releases](https://github.com/itsmaiGe/luci-app-7rules/releases) and upload it under **System → Software**. The page is at **Services → 分流规则**.
 

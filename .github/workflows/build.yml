@@ -27,7 +27,7 @@ jobs:
             apk update && apk add luci-base
             apk add --allow-untrusted /dist/$(cat /dist/latest-apk.txt)
             test -s /www/luci-static/resources/view/7rules/rules.js
-            test -x /usr/libexec/7rules-apply && test -x /usr/libexec/7rules-fetch
+            test -x /usr/libexec/7rules-apply
             apk add uhttpd uhttpd-mod-ubus >/dev/null
             printf "pw\npw\n" | passwd root >/dev/null
             ubusd & sleep 1; rpcd & sleep 1; uhttpd -p 127.0.0.1:8080 -h /www -u /ubus; sleep 1
@@ -35,9 +35,7 @@ jobs:
             S=$(rpc '["00000000000000000000000000000000","session","login",{"username":"root","password":"pw"}]' | jsonfilter -e '@.result[1].ubus_rpc_session')
             ok() { ubus call session access "{\"ubus_rpc_session\":\"$S\",\"scope\":\"file\",\"object\":\"$1\",\"function\":\"$2\"}" | grep -q true || { echo "denied: $2 $1"; exit 1; }; }
             ok /etc/openclash/config/7rules.yaml read
-            ok /etc/openclash/proxy_provider/7rules-1.yaml read
             ok /tmp/7rules.yaml write
-            ok "/usr/libexec/7rules-fetch https://example.com/sub" exec
             ok /usr/libexec/7rules-apply exec
             apk del luci-app-7rules
             test ! -e /www/luci-static/resources/view/7rules
