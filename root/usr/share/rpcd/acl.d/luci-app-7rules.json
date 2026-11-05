@@ -1,0 +1,28 @@
+{
+	"luci-app-7rules": {
+		"description": "Grant access to the 分流规则 (split rules) page",
+		"read": {
+			"ubus": {
+				"file": [ "read" ],
+				"uci": [ "get" ]
+			},
+			"file": {
+				"/etc/openclash/custom/openclash_custom_rules.list": [ "read" ],
+				"/etc/openclash/custom/openclash_custom_rules.list.bak": [ "read" ],
+				"/etc/openclash/config/*": [ "read" ],
+				"/tmp/dhcp.leases": [ "read" ]
+			},
+			"uci": [ "openclash", "dhcp" ]
+		},
+		"write": {
+			"ubus": {
+				"file": [ "write", "exec" ]
+			},
+			"file": {
+				"/etc/openclash/custom/openclash_custom_rules.list": [ "write" ],
+				"/etc/openclash/custom/openclash_custom_rules.list.bak": [ "write" ],
+				"/usr/libexec/7rules-apply": [ "exec" ]
+			}
+		}
+	}
+}

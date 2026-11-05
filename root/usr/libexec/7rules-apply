@@ -1,0 +1,10 @@
+#!/bin/sh
+# Run by the 分流规则 page after it saves OpenClash's custom rules file:
+# make sure OpenClash reads that file, then restart OpenClash in the background so the page returns at once.
+if [ "$(uci -q get openclash.config.enable_custom_clash_rules)" != 1 ]; then
+	uci -q set openclash.config.enable_custom_clash_rules=1
+	uci -q commit openclash
+fi
+[ "$(uci -q get openclash.config.enable)" = 1 ] || { echo saved; exit 0; }
+/etc/init.d/openclash restart </dev/null >/dev/null 2>&1 &
+echo restarting

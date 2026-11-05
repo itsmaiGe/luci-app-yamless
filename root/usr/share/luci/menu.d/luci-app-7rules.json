@@ -1,0 +1,14 @@
+{
+	"admin/services/7rules": {
+		"title": "分流规则",
+		"order": 60,
+		"action": {
+			"type": "view",
+			"path": "7rules/rules"
+		},
+		"depends": {
+			"acl": [ "luci-app-7rules" ],
+			"uci": { "openclash": true }
+		}
+	}
+}

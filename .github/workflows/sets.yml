@@ -1,0 +1,24 @@
+# Once a month, refresh the searchable list of rule sets from blackmatrix7/ios_rule_script.
+# The new list ships with the next release.
+name: sets
+on:
+  schedule: [ { cron: '17 3 1 * *' } ]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: node scripts/gen-sets.mjs
+        env: { GH_TOKEN: '${{ github.token }}' }
+      - name: Commit
+        run: |
+          git diff --quiet && exit 0
+          git add htdocs
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -m "sets: refresh rule set list"
+          git push

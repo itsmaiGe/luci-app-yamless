@@ -1,0 +1,194 @@
+# Search words for blackmatrix7 rule sets: <Name> <Chinese label> [more words...]
+# The label is shown in the UI; the other words are only searched. A label "-" means none.
+OpenAI ChatGPT chatgpt gpt sora ai 人工智能
+Claude - anthropic ai
+Anthropic - claude ai
+Gemini - 谷歌 bard ai
+BardAI Bard 谷歌 ai
+Copilot - 微软 ai
+Civitai - ai 绘画
+YouTube 油管 yt 视频
+YouTubeMusic YouTube音乐 油管 音乐
+Netflix 网飞 奈飞 nf 流媒体
+Disney 迪士尼 disney+ 流媒体
+HBO - max 流媒体
+Hulu - 流媒体
+PrimeVideo 亚马逊视频 prime 流媒体
+AppleTV 苹果TV appletv+ 流媒体
+TikTok 海外抖音 短视频
+Twitch - 直播
+Spotify 声破天 音乐
+AppleMusic 苹果音乐 音乐
+TIDAL - 音乐
+Deezer - 音乐
+SoundCloud - 音乐
+KKBOX - 音乐
+GlobalMedia 海外流媒体 国外 视频 流媒体
+Bahamut 巴哈姆特 动画疯 台湾
+AbemaTV - abema 日本 动画
+Niconico N站 nico 日本 弹幕
+DAZN - 体育
+Google 谷歌 gmail
+GoogleSearch 谷歌搜索
+GoogleDrive 谷歌云盘 网盘
+GoogleFCM 谷歌推送 fcm 安卓推送
+GoogleVoice 谷歌语音 gv
+GoogleEarth 谷歌地球
+Scholar 谷歌学术 学术
+Telegram 电报 tg 飞机
+Twitter 推特 x
+Facebook 脸书 fb meta
+Instagram - ins ig
+Threads - meta
+Whatsapp - 聊天
+Line - 聊天 日本
+Discord - dc 聊天 游戏
+Reddit 红迪 论坛
+Pinterest - 图片
+Tumblr 汤不热
+LinkedIn 领英
+Wikipedia 维基百科 wiki
+Wikimedia 维基媒体 wiki
+Pixiv P站 插画
+GitHub - 代码 git
+GitLab - 代码 git
+Gitee 码云 git
+Docker - 容器 dockerhub
+Npmjs - npm 前端
+Python - pypi pip
+Jetbrains - idea
+Developer 开发者 开发
+Cloudflare - cf
+Notion - 笔记
+Figma - 设计
+Dropbox - 网盘
+OneDrive 微软网盘 网盘
+MEGA - 网盘
+PikPak - 网盘
+Apple 苹果
+AppStore 苹果商店 应用商店
+iCloud 苹果云
+iCloudPrivateRelay iCloud专用代理 私人中继
+AppleID 苹果账号
+TestFlight - 苹果测试
+Siri - 苹果
+SystemOTA 系统更新 ota
+Microsoft 微软 windows office
+MicrosoftEdge Edge浏览器 微软
+Teams - 微软 会议
+Bing 必应 微软 搜索
+Adobe - ps 设计
+Amazon 亚马逊 购物
+AmazonCN 亚马逊中国
+eBay - 购物
+PayPal 贝宝 支付
+Stripe - 支付
+Binance 币安 加密货币
+OKX 欧易 加密货币
+Cryptocurrency 加密货币 币圈
+Steam - 游戏 蒸汽
+SteamCN Steam中国 游戏 蒸汽平台
+Epic - 游戏
+PlayStation 索尼 ps psn 游戏
+Xbox - 微软 游戏
+Nintendo 任天堂 switch ns 游戏
+Blizzard 暴雪 游戏
+Battle 战网 暴雪 游戏
+EA - 游戏 origin
+Ubisoft 育碧 uplay 游戏
+Riot 拳头 lol 英雄联盟 游戏
+Supercell - 部落冲突 游戏
+HoYoverse 米哈游 原神 崩坏 游戏
+Rockstar R星 gta 游戏
+Game 游戏
+Speedtest 测速
+Mozilla 火狐 firefox
+Yandex - 俄罗斯 搜索
+Duckduckgo - 搜索
+Duolingo 多邻国 学英语
+Patreon - 赞助
+Imgur - 图床
+Vimeo - 视频
+BBC - 新闻
+CNN - 新闻
+NYTimes 纽约时报 新闻
+Bloomberg 彭博 新闻
+Proxy 常用国外网站 国外 翻墙 代理
+ProxyLite 常用国外网站精简 国外 代理
+Global 国外网站全集 国外 翻墙 代理 海外
+China 国内网站 中国 大陆 直连
+ChinaMax 国内网站全集 中国 大陆 直连
+ChinaIPs 国内IP 中国 大陆 直连
+ChinaMedia 国内视频 国内 流媒体
+Lan 局域网 内网
+Direct 常用直连 直连
+Download 下载 bt
+PrivateTracker PT站 pt bt 下载
+Advertising 广告拦截 去广告 广告 ad
+AdvertisingLite 广告拦截精简 去广告 广告 ad
+Privacy 隐私跟踪拦截 隐私 跟踪
+EasyPrivacy 隐私跟踪拦截 隐私 跟踪
+Hijacking 运营商劫持 劫持
+BlockHttpDNS 屏蔽HttpDNS httpdns
+MIUIPrivacy 小米隐私 miui
+BiliBili 哔哩哔哩 b站 视频
+BiliBiliIntl 哔哩哔哩港澳台 b站 番剧
+iQIYI 爱奇艺 视频
+iQIYIIntl 爱奇艺国际 视频
+Youku 优酷 视频
+TencentVideo 腾讯视频 视频
+WeTV 腾讯视频海外 视频
+HunanTV 芒果TV 芒果 视频
+DouYin 抖音 短视频
+KuaiShou 快手 短视频
+XiaoHongShu 小红书 rednote
+Weibo 微博
+Zhihu 知乎
+DouBan 豆瓣
+Tencent 腾讯 qq
+WeChat 微信
+Alibaba 阿里巴巴 淘宝 天猫
+AliPay 支付宝 支付
+ByteDance 字节跳动 抖音 头条
+Baidu 百度
+NetEase 网易
+NetEaseMusic 网易云音乐 音乐
+KugouKuwo 酷狗酷我 音乐
+Himalaya 喜马拉雅 音频
+JingDong 京东 购物
+Pinduoduo 拼多多 购物
+MeiTuan 美团 外卖
+Eleme 饿了么 外卖
+DiDi 滴滴 打车
+XieCheng 携程 旅行
+GaoDe 高德地图 地图
+XiaoMi 小米
+Huawei 华为
+OPPO - 欧珀
+OnePlus 一加
+Sina 新浪
+Sohu 搜狐
+CCTV 央视 视频
+Migu 咪咕 视频
+Douyu 斗鱼 直播
+HuYa 虎牙 直播
+AcFun A站 弹幕 视频
+CSDN - 开发
+Xunlei 迅雷 下载
+BaiDuTieBa 百度贴吧 贴吧
+TapTap - 游戏
+NGA - 游戏论坛
+Coolapk 酷安
+DingTalk 钉钉
+ChinaMobile 中国移动 运营商
+ChinaTelecom 中国电信 运营商
+ChinaUnicom 中国联通 运营商
+CNKI 知网 论文
+GovCN 政府网站 gov
+UnionPay 银联 支付
+Synology 群晖 nas
+TeamViewer - 远程
+RemoteDesktop 远程桌面 远程
+NTPService 时间同步 ntp
+STUN - 打洞 p2p
+Emby - 影音
