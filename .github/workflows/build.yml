@@ -17,7 +17,10 @@ jobs:
         with: { fetch-depth: 0 }
       - name: Build
         run: |
-          curl -fsSL https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64/apk-tools-static-3.0.8-r0.apk | tar -xz sbin/apk.static
+          # the newest apk-tools-static in Alpine (old versions are removed from the mirror)
+          A=https://dl-cdn.alpinelinux.org/alpine/v3.23/main/x86_64
+          v=$(curl -fsSL $A/APKINDEX.tar.gz | tar -xzO APKINDEX | awk -F: '$1=="P"{p=$2} $1=="V"&&p=="apk-tools-static"{v=$2} END{print v}')
+          curl -fsSL $A/apk-tools-static-$v.apk | tar -xz sbin/apk.static
           sudo APK=$PWD/sbin/apk.static sh scripts/build-apk.sh
           sudo chown -R "$(id -u):$(id -g)" dist
       - name: Install, check, remove
