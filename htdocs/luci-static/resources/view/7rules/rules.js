@@ -27,6 +27,7 @@ const MIRRORS = [
 const FILES = [ '_No_Resolve.yaml', '.yaml', '_Classical_No_Resolve.yaml', '_Classical.yaml' ];
 const BUILTIN = [ 'DIRECT', 'REJECT', 'REJECT-DROP', 'PASS', 'COMPATIBLE', 'GLOBAL' ];
 const POPULAR = [ 'OpenAI', 'Claude', 'Gemini', 'YouTube', 'Netflix', 'Google', 'Telegram', 'GitHub', 'Twitter', 'Spotify', 'Steam', 'TikTok', 'Apple', 'Microsoft' ];
+const BRAND = new Set('OpenAI Claude Gemini YouTube Netflix Google Telegram GitHub Twitter Spotify Steam TikTok Apple Microsoft Instagram Facebook Epic Discord Reddit Twitch Whatsapp PayPal BiliBili Amazon Line PlayStation'.split(' '));
 const BIG = 512;                       // KB; bigger sets cost the router noticeable memory
 // Plain alternations, used as the core's filter on the subscription.
 const REGIONS = [
@@ -48,7 +49,7 @@ const TYPES = [
 // Built in to the core, nothing to download.
 const GEO = [ [ 'LAN', T('局域网', 'Local network'), 'lan local 局域网 内网 本地' ], [ 'CN', T('国内网站', 'Sites in China'), 'cn china 国内 中国 大陆 直连' ] ];
 // Name ideas for a new group, with what they usually hold.
-const IDEAS = [ [ 'AI', 'AI', 'OpenAI Claude Gemini' ], [ '流媒体', 'Streaming', 'YouTube Netflix Disney Spotify' ], [ '社交', 'Social', 'Telegram Twitter Instagram Facebook' ],
+const IDEAS = [ [ 'AI', 'AI', 'OpenAI Claude Gemini' ], [ '流媒体', 'Streaming', 'YouTube Netflix Spotify' ], [ '社交', 'Social', 'Telegram Twitter Instagram Facebook' ],
 	[ '游戏', 'Games', 'Steam Epic' ], [ '谷歌', 'Google', 'Google' ], [ '苹果', 'Apple', 'Apple' ] ];
 const STEPS = [ T('订阅', 'Subscription'), T('分组', 'Groups') ];
 const still = matchMedia('(prefers-reduced-motion: reduce)');
@@ -81,7 +82,9 @@ const key = r => r[0] + ',' + r[1];
 const rank = r => [ 'SRC-IP-CIDR', 'DOMAIN-SUFFIX', 'IP-CIDR', 'RULE-SET', 'GEOIP' ].indexOf(r[0]);
 const line = (r, to) => r[0] == 'RULE-SET' ? `RULE-SET,${MINE}${r[1]},${to}` : `${r[0]},${r[1]},${to}${r[0] == 'IP-CIDR' ? ',no-resolve' : ''}`;
 
-const starter = () => ({ subs: [ '' ], groups: [], direct: GEO.map(g => [ 'GEOIP', g[0] ]), final: 'DIRECT', mirror: 0 });
+// Only what everyone needs: home network and China go direct, the rest goes abroad on any node.
+const ABROAD = T('国外', 'Overseas');
+const starter = () => ({ subs: [ '' ], groups: [ { name: ABROAD, type: 'url-test', m: [ '*' ] } ], direct: GEO.map(g => [ 'GEOIP', g[0] ]), final: ABROAD, mirror: 0 });
 
 function stateOf(conf) {
 	const l = conf.split('\n').find(l => l.startsWith(TAG));
@@ -233,10 +236,8 @@ return view.extend({
 			'    interval: 21600', `    exclude-filter: ${q('(?i)' + JUNK)}`, '    header:', '      User-Agent: [clash.meta]',
 			'    health-check:', '      enable: true', `      url: ${PROBE}`, '      interval: 600', '      lazy: true' ].join('\n'));
 		const groups = this.groups.map(g => {
-			const sub = g.m.filter(t => t[0] == 'g').map(t => t.slice(2)), f = this.filterOf(g);
-			const out = [ `  - name: ${q(g.name)}`, `    type: ${g.type}` ];
-			if (sub.length || f === '' || !subs.length) out.push(`    proxies: [${(sub.length ? sub : [ 'DIRECT' ]).map(q).join(', ')}]`);
-			if (f !== '' && subs.length) out.push(`    use: [${use}]`, ...(f ? [ `    filter: ${q(f)}` ] : []));
+			const f = this.filterOf(g), out = [ `  - name: ${q(g.name)}`, `    type: ${g.type}` ];
+			out.push(...f === '' || !subs.length ? [ '    proxies: [DIRECT]' ] : [ `    use: [${use}]`, ...(f ? [ `    filter: ${q(f)}` ] : []) ]);
 			if (g.type != 'select') out.push(`    url: ${PROBE}`, '    interval: 300', ...(g.type == 'url-test' ? [ '    tolerance: 50' ] : []));
 			return out.join('\n');
 		});
@@ -349,13 +350,13 @@ return view.extend({
 	},
 
 	mLabel(t) {
-		return t == '*' ? T('全部节点', 'All nodes') : t[0] == 'r' ? (REG.get(t.slice(2)) || { name: t.slice(2) }).name : t.slice(2);
+		return t == '*' ? T('全部节点', 'All nodes') : (REG.get(t.slice(2)) || { name: t.slice(2) }).name;
 	},
 
 	// "节点  香港 日本" / "规则  OpenAI Claude +3"
 	chips(label, list, empty) {
 		const max = 6, more = list.length - max;
-		return `<span class="sr-l"><em>${label}</em>${list.length ? list.slice(0, max).map(x => `<span class="sr-m${x[0] == 'g' && x[1] == ':' ? ' g' : ''}">${esc(typeof x == 'string' ? this.mLabel(x) : this.face(x).title)}</span>`).join('')
+		return `<span class="sr-l"><em>${label}</em>${list.length ? list.slice(0, max).map(x => `<span class="sr-m">${esc(typeof x == 'string' ? this.mLabel(x) : this.face(x).title)}</span>`).join('')
 			+ (more > 0 ? `<span class="sr-m">+${more}</span>` : '') : `<span class="sr-none">${empty || T('还没有', 'None yet')}</span>`}</span>`;
 	},
 
@@ -372,7 +373,7 @@ return view.extend({
 		const [ t, v, n ] = r;
 		if (t == 'RULE-SET') {
 			const s = this.sets.get(v);
-			return { kind: 'set', ic: `<i>${esc(v[0])}</i>`, title: v, label: s && s.label, sub: T('规则集', 'Rule set') + (s && s.kb >= BIG ? T(` · 较大（${s.kb} KB），多占些内存`, ` · large (${s.kb} KB)`) : '') };
+			return { kind: BRAND.has(v) ? 'set brand' : 'set', ic: BRAND.has(v) ? `<svg class="b"><use href="${L.resource('7rules/icons.svg')}#${v}"/></svg>` : `<i>${esc(v[0])}</i>`, title: v, label: s && s.label, sub: T('规则集', 'Rule set') + (s && s.kb >= BIG ? T(` · 较大（${s.kb} KB），多占些内存`, ` · large (${s.kb} KB)`) : '') };
 		}
 		if (t == 'GEOIP') {
 			const g = GEO.find(g => g[0] == v);
@@ -390,15 +391,6 @@ return view.extend({
 
 	taken(name, g) {
 		return BUILTIN.some(b => b.toLowerCase() == name.toLowerCase()) || this.groups.some(h => h != g && h.name == name);
-	},
-
-	// Does group a (through its members) reach group b? Keeps groups from containing each other.
-	reaches(a, b, seen = new Set()) {
-		if (a == b) return true;
-		if (seen.has(a)) return false;
-		seen.add(a);
-		const g = this.group(a);
-		return !!g && g.m.some(t => t[0] == 'g' && this.reaches(t.slice(2), b, seen));
 	},
 
 	// Who else holds this rule: a group name, 直连, or nothing.
@@ -441,19 +433,16 @@ return view.extend({
 		box.className = 'sr sr-ed';
 		box.innerHTML = (dir ? '' : `<label class="sr-q sr-nm"><input value="${esc(d.name)}" placeholder="${T('名字，比如 AI、流媒体', 'Name, e.g. AI, Streaming')}" maxlength="32" autocomplete="off"></label>
 				${fresh ? `<div class="sr-opts sr-ideas">${IDEAS.map(i => T(i[0], i[1])).concat(REGIONS.slice(0, 5).map(r => r.name)).filter(n => !this.group(n)).map(n => this.opt(n, n, false, 'n')).join('')}</div>` : ''}
-				<p class="sr-cap">${T('用哪些节点', 'Which nodes')}</p><div class="sr-mem"></div>
+				<p class="sr-cap">${T('用哪些节点', 'Which nodes')}</p><div class="sr-opts sr-mem"></div>
 				<p class="sr-cap">${T('怎么选', 'How to choose')}</p><div class="sr-opts sr-types"></div><p class="sr-foot sr-tip"></p>`)
 			+ `<p class="sr-cap">${dir ? T('这些不走代理', 'These skip the proxy') : T('哪些走这个分组', 'What goes through it')}</p>
 			<div class="sr-ms sr-chosen"></div>
 			<label class="sr-q">${IC.search}<input type="search" class="sr-find" placeholder="${T('搜索服务、粘贴网址或输入设备名', 'Search a service, paste a URL or a device name')}" autocomplete="off"></label>
 			<div class="sr-hits"></div><p class="sr-err" hidden></p>`;
 		const $ = s => box.querySelector(s), name = $('.sr-nm input'), find = $('.sr-find'), err = $('.sr-err');
-		const groups = () => this.groups.filter(h => h != g && (d.m.includes('g:' + h.name) || !this.reaches(h.name, name.value)));
 		const paintM = () => {
 			if (dir) return;
-			const opts = list => `<div class="sr-opts">${list.map(([ t, l ]) => this.opt(t, l, d.m.includes(t))).join('')}</div>`, gs = groups();
-			$('.sr-mem').innerHTML = opts([ [ '*', T('全部节点', 'All nodes') ], ...REGIONS.map(r => [ 'r:' + r.key, r.name ]) ])
-				+ (gs.length ? `<p class="sr-cap">${T('也可以用其他分组', 'Or other groups')}</p>` + opts(gs.map(h => [ 'g:' + h.name, h.name ])) : '');
+			$('.sr-mem').innerHTML = [ [ '*', T('全部节点', 'All nodes') ], ...REGIONS.map(r => [ 'r:' + r.key, r.name ]) ].map(([ t, l ]) => this.opt(t, l, d.m.includes(t))).join('');
 			$('.sr-types').innerHTML = TYPES.map(([ v, l ]) => this.opt(v, l, v == d.type, 'y')).join('');
 			$('.sr-tip').textContent = TYPES.find(t => t[0] == d.type)[2];
 		};
@@ -481,7 +470,7 @@ return view.extend({
 			if (t) {
 				const on = d.m.includes(t);
 				// "all nodes" and single regions exclude each other
-				d.m = on ? d.m.filter(x => x != t) : [ ...d.m.filter(x => t == '*' ? x[0] != 'r' : t[0] != 'r' || x != '*'), t ];
+				d.m = on ? d.m.filter(x => x != t) : [ ...d.m.filter(x => (x == '*') == (t == '*')), t ];
 				paintM();
 			}
 			else if (y) { d.type = y; paintM(); }
@@ -502,7 +491,7 @@ return view.extend({
 			err.hidden = true;
 		};
 		find.oninput = paintR;
-		if (name) name.oninput = () => { err.hidden = true; paintM(); };
+		if (name) name.oninput = () => err.hidden = true;
 		const done = () => {
 			const v = dir ? '' : clean(name.value);
 			const bad = dir ? '' : !v ? T('起个名字', 'Give it a name') : this.taken(v, g) ? T('这个名字已经用过了', 'That name is taken') : !d.m.length ? T('至少选一项节点', 'Choose at least one') : '';
@@ -518,7 +507,7 @@ return view.extend({
 					this.groups.push(g);
 					if (this.groups.length == 1 && this.final == 'DIRECT') this.final = v;
 				}
-				else if (v != g.name) this.rename(g, v);
+				else if (v != g.name && this.final == g.name) this.final = v;
 				Object.assign(g, { name: v, type: d.type, m: d.m, r: d.r });
 			}
 			ui.hideModal();
@@ -534,12 +523,6 @@ return view.extend({
 		fresh && requestAnimationFrame(() => name.focus());
 	},
 
-	rename(g, v) {
-		const old = g.name;
-		for (const h of this.groups) h.m = h.m.map(t => t == 'g:' + old ? 'g:' + v : t);
-		if (this.final == old) this.final = v;
-	},
-
 	flash(k) {
 		const el = this.root.querySelector(k ? `.sr-card[data-k="${k}"]` : '.sr-dir');
 		if (!el) return;
@@ -549,10 +532,9 @@ return view.extend({
 
 	/* ---------- the list ---------- */
 
-	// What used the deleted group falls back: other groups lose it, "everything else" moves on.
+	// Its rules go with it; "everything else" moves on to the next group.
 	drop(card) {
 		const x = this.item(card), rest = this.groups.filter(g => g != x);
-		rest.forEach(g => g.m = g.m.filter(t => t != 'g:' + x.name));
 		if (this.final == x.name) this.final = rest.length ? rest[0].name : 'DIRECT';
 		this.groups = rest;
 		card.style.overflow = 'hidden';

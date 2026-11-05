@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="OpenWrt" src="https://img.shields.io/badge/OpenWrt-23.05%20%7C%2024.10%20%7C%2025.12-D97757?style=flat-square">
-  <img alt="Size" src="https://img.shields.io/badge/size-23%20KB-8A7F72?style=flat-square">
+  <img alt="Size" src="https://img.shields.io/badge/size-29%20KB-8A7F72?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-5B6F9A?style=flat-square">
 </p>
 
@@ -28,19 +28,19 @@
 | 步骤 | 做什么 |
 | --- | --- |
 | **1 订阅** | 粘贴链接。填好才能进下一步 |
-| **2 分组** | 新建一个组（比如「AI」），上面选用哪些节点（美国、香港……），下面搜「ChatGPT」「Claude」放进来 |
+| **2 分组** | 默认已有「国外」（全部节点）和「直连」（局域网、国内）。想单独分流就新建一个组（比如「AI」），上面选用哪些节点，下面搜「ChatGPT」「Claude」放进来 |
 
 点 **保存并生效**，它会生成一份完整的 OpenClash 配置，先让内核检查一遍，没问题才切换过去。
 
 ## 特性
 
 - **一个组一张卡**：用哪些节点、哪些网站走它，在同一个地方选好。拖动卡片调整优先级
-- **只预设人人都要的**：局域网和国内网站直连，其余由你决定；新建分组时可一键填好常用组合（AI、流媒体、社交……）
+- **只预设人人都要的**：局域网和国内网站直连，其余走「国外」（全部节点，自动选最快）。只填订阅就能用；新建分组时可一键填好常用组合（AI、流媒体、社交……）
 - **按地区选节点**：香港、日本、美国……按节点名自动筛选，不用逐个挑；机场塞进节点列表的「剩余流量」「到期时间」会被过滤掉
-- **搜索即用**：内置 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) 的 660+ 个规则集，支持中文搜索
+- **搜索即用**：常用平台带图标；内置 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) 的 660+ 个规则集，支持中文搜索
 - **网址和设备**：粘贴网址自动提取域名；从在线设备里点选，让某台设备全部直连或走代理
 - **不会改坏**：生效前由内核检查配置，没通过就不切换；原来的配置留在 OpenClash 里，随时切回
-- **轻**：安装包 23 KB，只是一个网页，没有后台进程。只有点「保存并生效」时路由器才干活
+- **轻**：安装包 29 KB，只是一个网页，没有后台进程。只有点「保存并生效」时路由器才干活
 - **兼容**：OpenClash 的 Meta（mihomo）内核；任何 LuCI 主题下都能用，配合 [7Dollar](https://github.com/itsmaiGe/luci-theme-7dollar) 主题效果最好
 
 <p align="center">
@@ -78,8 +78,8 @@ cd /tmp && wget -O 7rules.apk https://github.com/itsmaiGe/luci-app-7rules/releas
 ## 使用
 
 1. **订阅**：粘贴机场给的订阅链接，点 **下一步**
-2. **分组**：点 **新建分组**，起个名字，选用哪些节点，再搜索要走这个组的服务、网址或设备
-3. 底部 **其他所有** 选一个组，没对上任何规则的流量走它
+2. **分组**：默认的「国外」和「直连」已经够用。想单独分流，点 **新建分组**，起个名字，选用哪些节点，再搜索要走这个组的服务、网址或设备
+3. 底部 **其他所有** 默认走「国外」，没对上任何规则的流量走它
 4. 点 **保存并生效**。OpenClash 会重启，断网几秒
 
 「手动选」的分组，在 OpenClash 的控制面板里点选节点。
@@ -146,11 +146,12 @@ make package/luci-app-7rules/compile V=s
 ## 致谢
 
 - [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script)：规则集来源
+- [Simple Icons](https://simpleicons.org)：平台图标（CC0，商标归各自所有者）
 - [OpenClash](https://github.com/vernesong/OpenClash)
 
 ## English
 
-7Rules is a LuCI page for OpenClash that takes you from a single subscription link to a working config in two steps: paste the link, then make groups. Each group card holds which nodes it uses (all, by region, or other groups; pick / fastest / failover) and what goes through it (660+ rule sets from blackmatrix7/ios_rule_script, URLs or devices). Drag cards to set priority; local network and China go direct by default. Applying writes one complete config, has the core check it, then switches OpenClash to it; your old config stays. 23 KB, no background process.
+7Rules is a LuCI page for OpenClash that takes you from a single subscription link to a working config in two steps: paste the link, then make groups. Each group card holds which nodes it uses (all or by region; pick / fastest / failover) and what goes through it (660+ rule sets from blackmatrix7/ios_rule_script, URLs or devices). Drag cards to set priority; by default the local network and China go direct and everything else uses an "Overseas" group with all nodes. Applying writes one complete config, has the core check it, then switches OpenClash to it; your old config stays. 29 KB, no background process.
 
 Install: download the ipk (OpenWrt 23.05 / 24.10) or apk (25.x) from [Releases](https://github.com/itsmaiGe/luci-app-7rules/releases) and upload it under **System → Software**. The page is at **Services → 分流规则**.
 
