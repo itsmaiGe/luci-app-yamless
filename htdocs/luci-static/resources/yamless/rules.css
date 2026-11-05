@@ -81,8 +81,9 @@
 .sr-m.add:hover{color:var(--a2);border-color:var(--a)}
 .sr-m.add svg{width:13px;height:13px}
 .sr-none{color:var(--i3);font-size:12.5px}
-.sr-rest{margin-top:4px;background:none;box-shadow:none;border-style:dashed}
-.sr-dir,.sr-rest{padding-left:42px}
+/* 直连 and 国外 are built in: drawn as outlines, set apart from the groups you make */
+.sr-dir,.sr-rest{padding-left:42px;background:none;box-shadow:none;border-style:dashed}
+.sr-dir{margin-top:4px}
 .sr-x{display:grid;place-items:center;width:30px;height:30px;padding:0;border:0;border-radius:8px;background:none;color:var(--i3);cursor:pointer;flex:none}
 .sr-x:hover{background:var(--bds);color:var(--bd)}
 
@@ -124,8 +125,9 @@
 .sr-hit:hover,.sr-hit:focus-visible{background:var(--s2);outline:0}
 .sr-hit[aria-pressed=true]{background:var(--as)}
 .sr-hit>svg{color:var(--a2)}
-.sr-pop{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px}
-.sr-pop small{display:none}
+/* three rows of popular services, as many as fit; search finds the rest */
+.sr-pop{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));grid-template-rows:repeat(3,auto);grid-auto-rows:0;align-items:start;gap:0 4px;overflow:clip;flex:none}
+.sr-pop small,.sr-pop em{display:none}
 .sr-hits>.sr-none{text-align:center;padding:30px 0}
 .sr-err{color:var(--bd);font-size:13px;margin:10px 0 0}
 .sr-err[hidden]{display:none}
