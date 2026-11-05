@@ -88,9 +88,11 @@ const key = r => r[0] + ',' + r[1];
 const rank = r => [ 'SRC-IP-CIDR', 'DOMAIN-SUFFIX', 'IP-CIDR', 'RULE-SET', 'GEOIP' ].indexOf(r[0]);
 const line = (r, to) => r[0] == 'RULE-SET' ? `RULE-SET,${MINE}${r[1]},${to}` : `${r[0]},${r[1]},${to}${r[0] == 'IP-CIDR' ? ',no-resolve' : ''}`;
 
-// Only what everyone needs: home network and China go direct, the rest goes abroad on any node.
+// Only what everyone needs: home network and China go direct, everything else goes abroad on any node.
+// 国外 is the catch-all, so it holds no rules of its own; 'd' among its nodes sends the rest direct.
 const ABROAD = T('国外', 'Overseas');
-const starter = auto => ({ subs: [ '' ], groups: [ { name: ABROAD, type: auto, m: [ '*' ] } ], direct: GEO.map(g => [ 'GEOIP', g[0] ]), final: ABROAD, mirror: 0 });
+const starter = auto => ({ subs: [ '' ], groups: [], direct: GEO.map(g => [ 'GEOIP', g[0] ]), rest: { type: auto, m: [ '*' ] }, mirror: 0 });
+const solo = t => t == '*' || t == 'd';   // node choices that stand alone
 
 function stateOf(conf) {
 	const l = conf.split('\n').find(l => l.startsWith(TAG));
@@ -165,7 +167,7 @@ return view.extend({
 		this.subs = st.subs && st.subs.length ? [ ...st.subs ] : [ '' ];
 		this.groups = (st.groups || []).map(g => ({ name: g.name, type: g.type, m: [ ...g.m ], r: (g.r || []).map(r => [ ...r ]), k: ++this.seq }));
 		this.direct = (st.direct || []).map(r => [ ...r ]);
-		this.final = st.final || 'DIRECT';
+		this.rest = st.rest ? { type: st.rest.type, m: [ ...st.rest.m ] } : starter(this.auto).rest;
 		this.mirror = st.mirror || 0;
 	},
 
@@ -184,13 +186,12 @@ return view.extend({
 			else if (c.contains('sr-subx')) { this.subs.splice(+t.dataset.i, 1); this.paint(); }
 			else if (c.contains('sr-use')) { const i = this.subs.indexOf(''); i < 0 ? this.subs.push(t.dataset.u) : this.subs[i] = t.dataset.u; this.paint(); }
 			else if (c.contains('sr-newg')) this.edit(null);
-			else if (c.contains('sr-open')) this.edit(card.dataset.k ? this.item(card) : 'direct');
+			else if (c.contains('sr-open')) this.edit(card.dataset.k ? this.item(card) : card.dataset.p);
 			else if (c.contains('sr-x')) this.drop(card);
 		});
 		body.addEventListener('change', ev => {
 			const c = ev.target.classList;
-			if (c.contains('sr-fin')) this.final = ev.target.value;
-			else if (c.contains('sr-mirror')) this.mirror = +ev.target.value;
+			if (c.contains('sr-mirror')) this.mirror = +ev.target.value;
 			else return;
 			this.paint();
 		});
@@ -237,7 +238,7 @@ return view.extend({
 
 	snap() {
 		return { subs: this.subs.filter(Boolean), groups: this.groups.map(({ name, type, m, r }) => ({ name, type, m, r })),
-			direct: this.direct, final: this.final, mirror: this.mirror };
+			direct: this.direct, rest: this.rest, mirror: this.mirror };
 	},
 
 	build() {
@@ -245,7 +246,7 @@ return view.extend({
 		const prov = subs.map((u, i) => [ `  sub${i + 1}:`, '    type: http', `    url: ${q(u)}`, `    path: ./proxy_provider/yamless-${i + 1}.yaml`,
 			'    interval: 21600', `    exclude-filter: ${q('(?i)' + JUNK)}`, '    header:', '      User-Agent: [clash.meta]',
 			'    health-check:', '      enable: true', `      url: ${PROBE}`, '      interval: 600', '      lazy: true' ].join('\n'));
-		const groups = this.groups.map(g => {
+		const groups = [ { name: ABROAD, ...this.rest }, ...this.groups ].map(g => {
 			const f = this.filterOf(g), out = [ `  - name: ${q(g.name)}`, `    type: ${g.type}` ];
 			out.push(...f === '' || !subs.length ? [ '    proxies: [DIRECT]' ] : [ `    use: [${use}]`, ...(f ? [ `    filter: ${q(f)}` ] : []) ]);
 			if (g.type != 'select') out.push(`    url: ${PROBE}`, '    interval: 300', ...(g.type == 'url-test' ? [ '    tolerance: 50' ] : []));
@@ -264,7 +265,7 @@ return view.extend({
 			'rule-providers:' + (sets.length ? '' : ' {}'),
 			...sets.map(n => `  ${MINE}${n}:\n    type: http\n    behavior: classical\n    format: yaml\n    url: ${this.url(n)}\n    path: ./rule_provider/${MINE}${n}.yaml\n    interval: 86400`),
 			'rules:', ...all.map(([ r, to ]) => `  - ${q(line(r, to))}${r[2] ? ' # ' + r[2].replace(/\s+/g, ' ') : ''}`),
-			`  - ${q('MATCH,' + this.final)}`, '' ].join('\n');
+			`  - ${q('MATCH,' + ABROAD)}`, '' ].join('\n');
 	},
 
 	// [ step, message ] for the first thing that would stop the config from working
@@ -272,7 +273,7 @@ return view.extend({
 		if (!this.valid()) return [ 0, T('先填好订阅链接', 'Fill in the subscription link first') ];
 		const g = this.groups.find(g => !g.m.length);
 		if (g) return [ 1, T(`「${g.name}」还没选节点`, `"${g.name}" has no nodes`) ];
-		const s = !this.smart && this.groups.find(g => g.type == 'smart');
+		const s = !this.smart && [ { name: ABROAD, ...this.rest }, ...this.groups ].find(g => g.type == 'smart');
 		if (s) return [ 1, T(`「${s.name}」的智能选要 Smart 内核，换一种选法，或在 OpenClash 里打开 Smart 内核`, `"${s.name}" uses Smart, which needs the Smart core; pick another way or turn the Smart core on in OpenClash`) ];
 	},
 
@@ -342,18 +343,16 @@ return view.extend({
 	},
 
 	pGroups() {
-		const tos = [ 'DIRECT', ...this.groups.map(g => g.name) ];
 		return `<section class="sr-sec">
 				<div class="sr-cap2 row"><span><b>${T('分组', 'Groups')}</b><small>${T('拖动调整顺序，越靠上越优先', 'Drag to reorder; higher groups win')}</small></span>
 					<button type="button" class="btn cbi-button-action sr-newg">${IC.plus}${T('新建分组', 'New group')}</button></div>
 				${this.groups.length ? `<div class="sr-list">${this.groups.map(g => this.gCard(g)).join('')}</div>`
 					: `<div class="sr-empty"><b>${T('还没有分组', 'No groups yet')}</b><p>${T('比如建一个「AI」分组，选美国节点，再把 ChatGPT、Claude 放进去。', 'For example, make an "AI" group with US nodes and put ChatGPT and Claude in it.')}</p>
 						<button type="button" class="btn sr-newg">${IC.plus}${T('新建分组', 'New group')}</button></div>`}
-				<div class="sr-card sr-g sr-dir"><button type="button" class="sr-open"><span class="sr-ic">${IC.dir}</span>
+				<div class="sr-card sr-g sr-dir" data-p="direct"><button type="button" class="sr-open"><span class="sr-ic">${IC.dir}</span>
 					<span class="sr-t"><b>${T('直连', 'Direct')}</b><small>${T('不走代理', 'No proxy')}</small>${this.chips(T('规则', 'Rules'), this.direct)}</span></button></div>
-				<div class="sr-card sr-final"><span class="sr-ic">${IC.rest}</span>
-					<div class="sr-t"><b>${T('其他所有', 'Everything else')}</b><small>${T('上面都没对上的，走这里', 'Whatever nothing above matches')}</small></div>
-					<label class="sr-to${this.final == 'DIRECT' ? ' ok' : ''}"><select class="sr-fin" aria-label="${T('走哪里', 'Route')}">${tos.map(t => `<option value="${esc(t)}"${t == this.final ? ' selected' : ''}>${esc(t == 'DIRECT' ? T('直连', 'Direct') : t)}</option>`).join('')}</select></label></div>
+				<div class="sr-card sr-g sr-rest" data-p="rest"><button type="button" class="sr-open"><span class="sr-ic">${IC.rest}</span>
+					<span class="sr-t"><b>${ABROAD}</b><small>${this.rest.m.includes('d') ? '' : typeName(this.rest.type) + ' · '}${T('上面都没对上的，都走这里', 'Whatever nothing above matches')}</small>${this.chips(T('节点', 'Nodes'), this.rest.m)}</span></button></div>
 			</section>
 			<details class="sr-more"><summary>${T('更多', 'More')}</summary>
 				<label class="sr-row"><span>${T('规则集下载地址', 'Rule set source')}<small>${T('下载慢或失败时换一个', 'Switch if downloads are slow or fail')}</small></span>
@@ -362,7 +361,7 @@ return view.extend({
 	},
 
 	mLabel(t) {
-		return t == '*' ? T('全部节点', 'All nodes') : (REG.get(t.slice(2)) || { name: t.slice(2) }).name;
+		return t == '*' ? T('全部节点', 'All nodes') : t == 'd' ? T('直连', 'Direct') : (REG.get(t.slice(2)) || { name: t.slice(2) }).name;
 	},
 
 	// "节点  香港 日本" / "规则  OpenAI Claude +3"
@@ -376,7 +375,7 @@ return view.extend({
 		return `<div class="sr-card sr-g" data-k="${g.k}">
 			<button type="button" class="sr-grip" aria-label="${T('拖动排序', 'Drag to reorder')}">${IC.grip}</button>
 			<button type="button" class="sr-open"><span class="sr-ic k-g">${IC[g.type]}</span>
-				<span class="sr-t"><b>${esc(g.name)}${this.final == g.name ? ` <span class="sr-chip">${T('其他所有', 'Everything else')}</span>` : ''}</b><small>${typeName(g.type)}</small>
+				<span class="sr-t"><b>${esc(g.name)}</b><small>${typeName(g.type)}</small>
 					${this.chips(T('节点', 'Nodes'), g.m, `<span class="sr-chip bad">${T('还没选', 'Not chosen')}</span>`)}${this.chips(T('规则', 'Rules'), g.r)}</span></button>
 			<button type="button" class="sr-x" aria-label="${T('删除', 'Delete')}">${IC.x}</button></div>`;
 	},
@@ -402,7 +401,7 @@ return view.extend({
 	/* ---------- one group: its nodes on top, what goes through it below ---------- */
 
 	taken(name, g) {
-		return BUILTIN.some(b => b.toLowerCase() == name.toLowerCase()) || this.groups.some(h => h != g && h.name == name);
+		return [ ...BUILTIN, ABROAD ].some(b => b.toLowerCase() == name.toLowerCase()) || this.groups.some(h => h != g && h.name == name);
 	},
 
 	// Who else holds this rule: a group name, 直连, or nothing.
@@ -436,30 +435,32 @@ return view.extend({
 		return out.concat(found.slice(0, 40).map(([ , e ]) => [ 'RULE-SET', e.name ]));
 	},
 
-	// g: a group to edit, null for a new one, 'direct' for the 直连 list.
+	// g: a group to edit, null for a new one, 'direct' for the 直连 list, 'rest' for 国外 (nodes only).
 	edit(g) {
-		const dir = g == 'direct', fresh = !g;
-		const d = dir ? { r: this.direct.map(r => [ ...r ]) }
+		const dir = g == 'direct', rest = g == 'rest', fresh = !g;
+		const d = dir ? { r: this.direct.map(r => [ ...r ]) } : rest ? { type: this.rest.type, m: [ ...this.rest.m ] }
 			: fresh ? { name: '', type: 'select', m: [ '*' ], r: [] } : { name: g.name, type: g.type, m: [ ...g.m ], r: g.r.map(r => [ ...r ]) };
 		const box = document.createElement('div');
 		box.className = 'sr sr-ed';
-		box.innerHTML = (dir ? '' : `<label class="sr-q sr-nm"><input value="${esc(d.name)}" placeholder="${T('名字，比如 AI、流媒体', 'Name, e.g. AI, Streaming')}" maxlength="32" autocomplete="off"></label>
-				${fresh ? `<div class="sr-opts sr-ideas">${IDEAS.map(i => T(i[0], i[1])).concat(REGIONS.slice(0, 5).map(r => r.name)).filter(n => !this.group(n)).map(n => this.opt(n, n, false, 'n')).join('')}</div>` : ''}
+		box.innerHTML = (dir ? '' : `${rest ? '' : `<label class="sr-q sr-nm"><input value="${esc(d.name)}" placeholder="${T('名字，比如 AI、流媒体', 'Name, e.g. AI, Streaming')}" maxlength="32" autocomplete="off"></label>
+				${fresh ? `<div class="sr-opts sr-ideas">${IDEAS.map(i => T(i[0], i[1])).concat(REGIONS.slice(0, 5).map(r => r.name)).filter(n => !this.group(n)).map(n => this.opt(n, n, false, 'n')).join('')}</div>` : ''}`}
 				<p class="sr-cap">${T('用哪些节点', 'Which nodes')}</p><div class="sr-opts sr-mem"></div>
-				<p class="sr-cap">${T('怎么选', 'How to choose')}</p><div class="sr-opts sr-types"></div><p class="sr-foot sr-tip"></p>`)
-			+ `<p class="sr-cap">${dir ? T('这些不走代理', 'These skip the proxy') : T('哪些走这个分组', 'What goes through it')}</p>
+				<div class="sr-how"><p class="sr-cap">${T('怎么选', 'How to choose')}</p><div class="sr-opts sr-types"></div><p class="sr-foot sr-tip"></p></div>`)
+			+ (rest ? '' : `<p class="sr-cap">${dir ? T('这些不走代理', 'These skip the proxy') : T('哪些走这个分组', 'What goes through it')}</p>
 			<div class="sr-ms sr-chosen"></div>
 			<label class="sr-q">${IC.search}<input type="search" class="sr-find" placeholder="${T('搜索服务、粘贴网址或输入设备名', 'Search a service, paste a URL or a device name')}" autocomplete="off"></label>
-			<div class="sr-hits"></div><p class="sr-err" hidden></p>`;
+			<div class="sr-hits"></div>`) + '<p class="sr-err" hidden></p>';
 		const $ = s => box.querySelector(s), name = $('.sr-nm input'), find = $('.sr-find'), err = $('.sr-err');
 		const paintM = () => {
 			if (dir) return;
-			$('.sr-mem').innerHTML = [ [ '*', T('全部节点', 'All nodes') ], ...REGIONS.map(r => [ 'r:' + r.key, r.name ]) ].map(([ t, l ]) => this.opt(t, l, d.m.includes(t))).join('');
+			$('.sr-mem').innerHTML = [ '*', ...REGIONS.map(r => 'r:' + r.key), ...rest ? [ 'd' ] : [] ].map(t => this.opt(t, this.mLabel(t), d.m.includes(t))).join('');
+			$('.sr-how').hidden = d.m.includes('d');
 			$('.sr-types').innerHTML = TYPES.filter(([ v ]) => v != 'smart' || this.smart || v == d.type).map(([ v, l ]) => this.opt(v, l, v == d.type, 'y')).join('');
 			$('.sr-tip').textContent = (TYPES.find(t => t[0] == d.type) || [])[2] || '';
 		};
 		let list = [];
 		const paintR = () => {
+			if (rest) return;
 			const has = new Set(d.r.map(key));
 			$('.sr-chosen').innerHTML = d.r.map((r, i) => `<span class="sr-m"><span>${esc(this.face(r).title)}</span><button type="button" class="sr-mx" data-i="${i}" aria-label="${T('移除', 'Remove')}">${IC.x}</button></span>`).join('')
 				|| `<span class="sr-none">${T('还没有，在下面搜索添加', 'Nothing yet; search below')}</span>`;
@@ -481,8 +482,8 @@ return view.extend({
 			const t = b.dataset.t, y = b.dataset.y, n = b.dataset.n;
 			if (t) {
 				const on = d.m.includes(t);
-				// "all nodes" and single regions exclude each other
-				d.m = on ? d.m.filter(x => x != t) : [ ...d.m.filter(x => (x == '*') == (t == '*')), t ];
+				// "all nodes" and "direct" stand alone; regions combine
+				d.m = on ? d.m.filter(x => x != t) : solo(t) ? [ t ] : [ ...d.m.filter(x => !solo(x)), t ];
 				paintM();
 			}
 			else if (y) { d.type = y; paintM(); }
@@ -502,12 +503,18 @@ return view.extend({
 			else return;
 			err.hidden = true;
 		};
-		find.oninput = paintR;
+		if (find) find.oninput = paintR;
 		if (name) name.oninput = () => err.hidden = true;
 		const done = () => {
-			const v = dir ? '' : clean(name.value);
-			const bad = dir ? '' : !v ? T('起个名字', 'Give it a name') : this.taken(v, g) ? T('这个名字已经用过了', 'That name is taken') : !d.m.length ? T('至少选一项节点', 'Choose at least one') : '';
+			const v = name ? clean(name.value) : '';
+			const bad = dir ? '' : !rest && !v ? T('起个名字', 'Give it a name') : !rest && this.taken(v, g) ? T('这个名字已经用过了', 'That name is taken') : !d.m.length ? T('至少选一项节点', 'Choose at least one') : '';
 			if (bad) { err.textContent = bad; err.hidden = false; return err.scrollIntoView({ block: 'nearest' }); }
+			if (rest) {
+				this.rest = { type: d.m.includes('d') ? 'select' : d.type, m: d.m };
+				ui.hideModal();
+				this.paint();
+				return this.flash('rest');
+			}
 			// a rule lives in one place: picking it here takes it out of the others
 			const mine = new Set(d.r.map(key)), keep = r => !mine.has(key(r));
 			for (const h of this.groups) if (h != g) h.r = h.r.filter(keep);
@@ -517,26 +524,24 @@ return view.extend({
 				if (fresh) {
 					g = { name: v, k: ++this.seq };
 					this.groups.push(g);
-					if (this.groups.length == 1 && this.final == 'DIRECT') this.final = v;
 				}
-				else if (v != g.name && this.final == g.name) this.final = v;
 				Object.assign(g, { name: v, type: d.type, m: d.m, r: d.r });
 			}
 			ui.hideModal();
 			this.paint();
-			this.flash(dir ? null : g.k);
+			this.flash(dir ? 'direct' : g.k);
 		};
 		if (name) name.onkeydown = ev => ev.key == 'Enter' && done();
 		paintM();
 		paintR();
-		ui.showModal(dir ? T('直连', 'Direct') : fresh ? T('新建分组', 'New group') : g.name, [ box, E('div', { class: 'right' }, [
+		ui.showModal(dir ? T('直连', 'Direct') : rest ? ABROAD : fresh ? T('新建分组', 'New group') : g.name, [ box, E('div', { class: 'right' }, [
 			E('button', { class: 'btn', click: ui.hideModal }, T('取消', 'Cancel')), ' ',
 			E('button', { class: 'btn cbi-button-action', click: done }, fresh ? T('创建', 'Create') : T('完成', 'Done')) ]) ]);
 		fresh && requestAnimationFrame(() => name.focus());
 	},
 
 	flash(k) {
-		const el = this.root.querySelector(k ? `.sr-card[data-k="${k}"]` : '.sr-dir');
+		const el = this.root.querySelector(`.sr-card[data-${+k ? 'k' : 'p'}="${k}"]`);
 		if (!el) return;
 		el.classList.add('new');
 		el.scrollIntoView({ block: 'nearest', behavior: still.matches ? 'auto' : 'smooth' });
@@ -544,11 +549,10 @@ return view.extend({
 
 	/* ---------- the list ---------- */
 
-	// Its rules go with it; "everything else" moves on to the next group.
+	// Its rules go with it; what they matched falls through to 国外.
 	drop(card) {
-		const x = this.item(card), rest = this.groups.filter(g => g != x);
-		if (this.final == x.name) this.final = rest.length ? rest[0].name : 'DIRECT';
-		this.groups = rest;
+		const x = this.item(card);
+		this.groups = this.groups.filter(g => g != x);
 		card.style.overflow = 'hidden';
 		const a = glide(card, [ { opacity: 1, height: card.offsetHeight + 'px' }, { opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0, marginTop: '-10px' } ], 220);
 		a === true ? this.paint() : a.onfinish = () => this.paint();
