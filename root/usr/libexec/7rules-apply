@@ -1,10 +1,20 @@
 #!/bin/sh
-# Run by the 分流规则 page after it saves OpenClash's custom rules file:
-# make sure OpenClash reads that file, then restart OpenClash in the background so the page returns at once.
-if [ "$(uci -q get openclash.config.enable_custom_clash_rules)" != 1 ]; then
-	uci -q set openclash.config.enable_custom_clash_rules=1
-	uci -q commit openclash
-fi
-[ "$(uci -q get openclash.config.enable)" = 1 ] || { echo saved; exit 0; }
+# Run by the 分流规则 page after it writes its draft: let the core check it, put it in place,
+# point OpenClash at it and restart OpenClash in the background so the page returns at once.
+D=/tmp/7rules.yaml F=/etc/openclash/config/7rules.yaml
+[ -s "$D" ] || exit 1
+for c in /etc/openclash/core/clash_meta /etc/openclash/core/clash; do
+	[ -x "$c" ] || continue
+	if ! SAFE_PATHS=/usr/share/openclash:/etc/openclash "$c" -t -d /etc/openclash -f "$D" </dev/null >/tmp/7rules.log 2>&1; then
+		sed -nE 's/.*level=(error|fatal) msg="(.*)".*/\2/p' /tmp/7rules.log | tail -n 1
+		exit 1
+	fi
+	break
+done
+mkdir -p /etc/openclash/config
+mv "$D" "$F" && rm -f /tmp/7rules.log
+uci -q set openclash.config.config_path="$F"
+uci -q set openclash.config.enable=1
+uci -q commit openclash
 /etc/init.d/openclash restart </dev/null >/dev/null 2>&1 &
 echo restarting

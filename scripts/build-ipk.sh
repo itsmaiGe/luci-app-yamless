@@ -32,8 +32,8 @@ URL: https://github.com/itsmaiGe/$NAME
 Maintainer: itsmaiGe
 Architecture: all
 Installed-Size: $((SIZE * 1024))
-Description: 7Rules: visual split rules for OpenClash. Search a service,
- pick where it goes, drag to reorder. No YAML.
+Description: 7Rules: visual split rules for OpenClash. Paste a subscription
+ link, make groups, pick where each service goes. No YAML.
 CTL
 cat > "$C/postinst" <<'SH'
 #!/bin/sh

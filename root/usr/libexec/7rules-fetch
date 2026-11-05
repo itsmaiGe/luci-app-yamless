@@ -1,0 +1,13 @@
+#!/bin/sh
+# Print a subscription for the 分流规则 page so it can list the nodes. Nothing is kept on disk.
+# First line: the provider's traffic/expiry header (may be empty). Then the subscription itself.
+case "$1" in http://*|https://*) ;; *) exit 2 ;; esac
+h=$(mktemp) b=$(mktemp)
+trap 'rm -f "$h" "$b"' EXIT
+if command -v curl >/dev/null; then
+	curl -sfL --max-time 20 --max-filesize 900000 -A clash.meta -D "$h" -o "$b" "$1" || exit 1
+else
+	wget -q -T 20 -U clash.meta -S -O "$b" "$1" 2>"$h" || exit 1
+fi
+echo "$(grep -i 'subscription-userinfo' "$h" | tail -n 1 | tr -d '\r')"
+cat "$b"

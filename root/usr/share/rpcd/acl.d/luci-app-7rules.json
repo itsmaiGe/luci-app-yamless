@@ -7,9 +7,8 @@
 				"uci": [ "get" ]
 			},
 			"file": {
-				"/etc/openclash/custom/openclash_custom_rules.list": [ "read" ],
-				"/etc/openclash/custom/openclash_custom_rules.list.bak": [ "read" ],
-				"/etc/openclash/config/*": [ "read" ],
+				"/etc/openclash/config/7rules.yaml": [ "read" ],
+				"/etc/openclash/proxy_provider/7rules-*": [ "read" ],
 				"/tmp/dhcp.leases": [ "read" ]
 			},
 			"uci": [ "openclash", "dhcp" ]
@@ -19,8 +18,8 @@
 				"file": [ "write", "exec" ]
 			},
 			"file": {
-				"/etc/openclash/custom/openclash_custom_rules.list": [ "write" ],
-				"/etc/openclash/custom/openclash_custom_rules.list.bak": [ "write" ],
+				"/tmp/7rules.yaml": [ "write" ],
+				"/usr/libexec/7rules-fetch *": [ "exec" ],
 				"/usr/libexec/7rules-apply": [ "exec" ]
 			}
 		}
