@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/groups.webp" alt="分组" width="100%">
+  <a href="docs/promo.mp4"><img src="docs/promo.webp" alt="宣传视频" width="100%"></a>
 </p>
 
 ## 为什么做它
@@ -42,9 +42,10 @@ YAMLess 只有两步，全程点选操作：
 - **网址和设备**：粘贴网址自动提取域名；在「设备」里点选，让某台设备全部直连或走代理
 - **不会改坏**：生效前由内核检查配置，没通过就不切换；原来的配置留在 OpenClash 里，随时切回
 - **轻**：安装包 30 KB，只是一个网页，没有后台进程。只在点「保存并生效」时由路由器生成和检查配置
-- **兼容**：OpenClash 的 Meta（mihomo）和 Smart 内核；任何 LuCI 主题下都能用，配合 [7Dollar](https://github.com/itsmaiGe/luci-theme-7dollar) 主题效果最好
+- **兼容**：OpenClash 的 Meta（mihomo）和 Smart 内核；任何 LuCI 主题下都能用，配合 [7Dollar](https://github.com/itsmaiGe/luci-theme-7dollar) 主题时界面风格一致
 
 <p align="center">
+  <img src="docs/groups.webp" alt="分组" width="100%">
   <img src="docs/subs.webp" alt="订阅" width="49%">
   <img src="docs/edit.webp" alt="编辑分组" width="49%">
 </p>
