@@ -93,6 +93,9 @@ const line = (r, to) => r[0] == 'RULE-SET' ? `RULE-SET,${MINE}${r[1]},${to}` : `
 const ABROAD = T('国外', 'Overseas');
 const starter = auto => ({ subs: [ '' ], groups: [], direct: GEO.map(g => [ 'GEOIP', g[0] ]), rest: { type: auto, m: [ '*' ] }, mirror: 0 });
 const solo = t => t == '*' || t == 'd';   // node choices that stand alone
+// 'k:尼日利亚 NG' is a custom choice: any node whose name has one of these words
+const words = s => s.split(/[\s,，、|]+/).filter(Boolean);
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function stateOf(conf) {
 	const l = conf.split('\n').find(l => l.startsWith(TAG));
@@ -233,7 +236,7 @@ return view.extend({
 	// null = every node, '' = no nodes, otherwise a regex the core filters the subscription with
 	filterOf(g) {
 		if (g.m.includes('*')) return null;
-		return g.m.filter(t => t[0] == 'r' && REG.has(t.slice(2))).map(t => REG.get(t.slice(2)).re).join('|');
+		return g.m.map(t => t[0] == 'r' ? (REG.get(t.slice(2)) || {}).re : t[0] == 'k' ? words(t.slice(2)).map(reEsc).join('|') : '').filter(Boolean).join('|');
 	},
 
 	snap() {
@@ -329,9 +332,9 @@ return view.extend({
 	},
 
 	pSubs() {
-		const rows = this.subs.map((u, i) => `<div class="sr-sub"><div class="sr-sub-r"><input class="cbi-input-text" type="url" data-sub="${i}" value="${esc(u)}" placeholder="https://…" autocomplete="off" spellcheck="false" aria-label="${T('订阅链接', 'Subscription link')}">
+		const rows = this.subs.map((u, i) => `<div class="sr-sub"><div class="sr-sub-r"><input class="cbi-input-text" type="url" data-sub="${i}" value="${esc(u)}" placeholder="${T('粘贴订阅链接', 'Paste the subscription link')}" autocomplete="off" spellcheck="false" aria-label="${T('订阅链接', 'Subscription link')}">
 				${this.subs.length > 1 ? `<button type="button" class="sr-x sr-subx" data-i="${i}" aria-label="${T('删除', 'Delete')}">${IC.x}</button>` : ''}</div>
-				<small class="sr-info bad"${!u || LINK.test(u) ? ' hidden' : ''}>${T('这不是一个链接，应以 https:// 开头', 'Not a link; it should start with https://')}</small></div>`).join('');
+				<small class="sr-info bad"${!u || LINK.test(u) ? ' hidden' : ''}>${T('这不是一个链接，应以 http:// 或 https:// 开头', 'Not a link; it should start with http:// or https://')}</small></div>`).join('');
 		const offer = this.ocSubs.filter(s => !this.subs.includes(s.address));
 		return `<section class="sr-sec">
 				<div class="sr-cap2"><b>${T('订阅链接', 'Subscription link')}</b><small>${T('机场给你的订阅地址', 'The link your provider gave you')}</small></div>
@@ -453,10 +456,11 @@ return view.extend({
 		const $ = s => box.querySelector(s), name = $('.sr-nm input'), find = $('.sr-find'), err = $('.sr-err');
 		const paintM = () => {
 			if (dir) return;
-			$('.sr-mem').innerHTML = [ '*', ...REGIONS.map(r => 'r:' + r.key), ...rest ? [ 'd' ] : [] ].map(t => this.opt(t, this.mLabel(t), d.m.includes(t))).join('');
+			$('.sr-mem').innerHTML = [ '*', ...REGIONS.map(r => 'r:' + r.key), ...d.m.filter(t => t[0] == 'k'), ...rest ? [ 'd' ] : [] ].map(t => this.opt(t, this.mLabel(t), d.m.includes(t))).join('')
+				+ `<button type="button" class="sr-opt sr-kw-add">${IC.plus}${T('自定义', 'Custom')}</button>`;
 			$('.sr-how').hidden = d.m.includes('d');
 			$('.sr-types').innerHTML = TYPES.filter(([ v ]) => v != 'smart' || this.smart || v == d.type).map(([ v, l ]) => this.opt(v, l, v == d.type, 'y')).join('');
-			$('.sr-tip').textContent = (TYPES.find(t => t[0] == d.type) || [])[2] || '';
+			$('.sr-tip').textContent = ((TYPES.find(t => t[0] == d.type) || [])[2] || '') + T(`（${d.type}）`, ` (${d.type})`);
 		};
 		let list = [];
 		const paintR = () => {
@@ -474,8 +478,7 @@ return view.extend({
 			const html = list.map(hit), dev = html.filter((h, i) => list[i][0] == 'SRC-IP-CIDR'), open = $('.sr-dev')?.open;
 			$('.sr-hits').innerHTML = s ? html.join('') || `<p class="sr-none">${T('没找到。可以试试英文名，或者直接粘贴网址。', 'Nothing found. Try the English name, or paste a URL.')}</p>`
 				: `<p class="sr-cap">${T('常用', 'Popular')}</p><div class="sr-pop">${html.filter((h, i) => list[i][0] != 'SRC-IP-CIDR').join('')}</div>`
-					+ (dev.length ? `<p class="sr-cap">${T('设备', 'Devices')}</p>${dev.slice(0, 3).join('')}`
-						+ (dev.length > 3 ? `<details class="sr-more sr-dev"${open ? ' open' : ''}><summary>${T(`其余 ${dev.length - 3} 台`, `${dev.length - 3} more`)}</summary>${dev.slice(3).join('')}</details>` : '') : '');
+					+ (dev.length ? `<details class="sr-more sr-dev"${open ? ' open' : ''}><summary>${T(`设备（${dev.length} 台）`, `Devices (${dev.length})`)}</summary>${dev.join('')}</details>` : '');
 		};
 		box.onclick = ev => {
 			const b = ev.target.closest('button');
@@ -494,6 +497,19 @@ return view.extend({
 				if (r) { d.m = [ 'r:' + r.key ]; d.type = this.auto; }
 				if (idea) for (const s of idea[2].split(' ')) this.sets.has(s) && !d.r.some(x => x[1] == s) && d.r.push([ 'RULE-SET', s ]);
 				paintM(); paintR();
+			}
+			else if (b.classList.contains('sr-kw-add')) {
+				b.outerHTML = `<input class="sr-opt sr-kw" maxlength="40" autocomplete="off" placeholder="${T('节点名里的词，如 尼日利亚', 'Word in node names, e.g. Nigeria')}">`;
+				const i = $('.sr-kw'), add = () => {
+					if (i.done) return;
+					i.done = 1;
+					const w = words(i.value).join(' ');
+					if (w && !d.m.includes('k:' + w)) d.m = [ ...d.m.filter(x => !solo(x)), 'k:' + w ];
+					paintM();
+				};
+				i.onkeydown = ev => { if (ev.key == 'Enter' || ev.key == 'Escape') { ev.preventDefault(); ev.stopPropagation(); ev.key == 'Enter' ? add() : paintM(); } };
+				i.onblur = () => i.isConnected && add();
+				return i.focus();
 			}
 			else if (b.classList.contains('sr-mx')) { d.r.splice(+b.dataset.i, 1); paintR(); }
 			else if (b.classList.contains('sr-hit')) {
