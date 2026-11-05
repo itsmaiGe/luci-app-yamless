@@ -92,6 +92,7 @@
 
 .sr-more{margin-top:22px}
 .sr-more summary{cursor:pointer;color:var(--i3);font-size:13.5px;width:max-content}
+.sr-dev{margin:0}.sr-dev summary{padding:8px 10px}
 .sr-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 20px;padding:12px 0;border-bottom:1px solid var(--ln);margin:0}
 .sr-row>span{display:flex;flex-direction:column;font-weight:500}
 .sr-row small{color:var(--i3);font-weight:400;font-size:12.5px}

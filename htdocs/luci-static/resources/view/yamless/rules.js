@@ -43,11 +43,11 @@ const REGIONS = [
 const REG = new Map(REGIONS.map(r => [ r.key, r ]));
 // Every group type OpenClash's cores know. "smart" only exists in the Smart (and Oix) core builds.
 const TYPES = [
-	[ 'select', T('手动选', 'Pick'), T('在 OpenClash 面板里自己点选节点', 'You choose the node in the OpenClash dashboard') ],
+	[ 'select', T('手动选', 'Pick'), T('在 OpenClash 面板里手动选择节点', 'You choose the node in the OpenClash dashboard') ],
 	[ 'url-test', T('自动选最快', 'Fastest'), T('定时测速，自动用最快的', 'Tests regularly and uses the fastest') ],
-	[ 'smart', T('智能选', 'Smart'), T('记住每个网站用哪个节点最顺，自动挑', 'Learns which node works best for each site') ],
-	[ 'fallback', T('按顺序备用', 'Failover'), T('用第一个，坏了自动换下一个', 'Uses the first; moves on when it fails') ],
-	[ 'load-balance', T('分摊着用', 'Share'), T('几个节点一起分担流量，适合大量下载', 'Spreads traffic over several nodes; good for big downloads') ]
+	[ 'smart', T('智能选', 'Smart'), T('记录每个网站用哪个节点效果最好，自动选择', 'Learns which node works best for each site') ],
+	[ 'fallback', T('按顺序备用', 'Failover'), T('优先用第一个，不可用时自动换下一个', 'Uses the first; moves on when it fails') ],
+	[ 'load-balance', T('分担流量', 'Share'), T('几个节点一起分担流量，适合大量下载', 'Spreads traffic over several nodes; good for big downloads') ]
 ];
 const typeName = t => (TYPES.find(x => x[0] == t) || [ , t ])[1];
 // Built in to the core, nothing to download.
@@ -352,7 +352,7 @@ return view.extend({
 				<div class="sr-card sr-g sr-dir" data-p="direct"><button type="button" class="sr-open"><span class="sr-ic">${IC.dir}</span>
 					<span class="sr-t"><b>${T('直连', 'Direct')}</b><small>${T('不走代理', 'No proxy')}</small>${this.chips(T('规则', 'Rules'), this.direct)}</span></button></div>
 				<div class="sr-card sr-g sr-rest" data-p="rest"><button type="button" class="sr-open"><span class="sr-ic">${IC.rest}</span>
-					<span class="sr-t"><b>${ABROAD}</b><small>${this.rest.m.includes('d') ? '' : typeName(this.rest.type) + ' · '}${T('上面都没对上的，都走这里', 'Whatever nothing above matches')}</small>${this.chips(T('节点', 'Nodes'), this.rest.m)}</span></button></div>
+					<span class="sr-t"><b>${ABROAD}</b><small>${this.rest.m.includes('d') ? '' : typeName(this.rest.type) + ' · '}${T('没有匹配上面规则的，都走这里', 'Whatever nothing above matches')}</small>${this.chips(T('节点', 'Nodes'), this.rest.m)}</span></button></div>
 			</section>
 			<details class="sr-more"><summary>${T('更多', 'More')}</summary>
 				<label class="sr-row"><span>${T('规则集下载地址', 'Rule set source')}<small>${T('下载慢或失败时换一个', 'Switch if downloads are slow or fail')}</small></span>
@@ -384,7 +384,7 @@ return view.extend({
 		const [ t, v, n ] = r;
 		if (t == 'RULE-SET') {
 			const s = this.sets.get(v);
-			return { kind: BRAND.has(v) ? 'set brand' : 'set', ic: BRAND.has(v) ? `<svg class="b"><use href="${L.resource('yamless/icons.svg')}#${v}"/></svg>` : `<i>${esc(v[0])}</i>`, title: v, label: s && s.label, sub: T('规则集', 'Rule set') + (s && s.kb >= BIG ? T(` · 较大（${s.kb} KB），多占些内存`, ` · large (${s.kb} KB)`) : '') };
+			return { kind: BRAND.has(v) ? 'set brand' : 'set', ic: BRAND.has(v) ? `<svg class="b"><use href="${L.resource('yamless/icons.svg')}#${v}"/></svg>` : `<i>${esc(v[0])}</i>`, title: v, label: s && s.label, sub: T('规则集', 'Rule set') + (s && s.kb >= BIG ? T(` · 较大（${s.kb} KB），会占用更多内存`, ` · large (${s.kb} KB)`) : '') };
 		}
 		if (t == 'GEOIP') {
 			const g = GEO.find(g => g[0] == v);
@@ -469,12 +469,13 @@ return view.extend({
 			const hit = (r, i) => {
 				const f = this.face(r), on = has.has(key(r)), o = !on && this.owner(key(r), dir ? 'direct' : g);
 				return `<button type="button" class="sr-hit" data-i="${i}" aria-pressed="${on}"><span class="sr-ic k-${f.kind}">${f.ic}</span>
-					<span class="sr-t"><b>${esc(f.title)}${f.label ? ` <em>${esc(f.label)}</em>` : ''}</b><small>${esc(o ? T(`现在在「${o}」，选了就移过来`, `Now in "${o}"; picking moves it here`) : f.sub)}</small></span>${on ? IC.check : ''}</button>`;
+					<span class="sr-t"><b>${esc(f.title)}${f.label ? ` <em>${esc(f.label)}</em>` : ''}</b><small>${esc(o ? T(`当前在「${o}」，选择后会移到这里`, `Now in "${o}"; selecting moves it here`) : f.sub)}</small></span>${on ? IC.check : ''}</button>`;
 			};
-			const html = list.map(hit);
+			const html = list.map(hit), dev = html.filter((h, i) => list[i][0] == 'SRC-IP-CIDR'), open = $('.sr-dev')?.open;
 			$('.sr-hits').innerHTML = s ? html.join('') || `<p class="sr-none">${T('没找到。可以试试英文名，或者直接粘贴网址。', 'Nothing found. Try the English name, or paste a URL.')}</p>`
 				: `<p class="sr-cap">${T('常用', 'Popular')}</p><div class="sr-pop">${html.filter((h, i) => list[i][0] != 'SRC-IP-CIDR').join('')}</div>`
-					+ (this.devices.length ? `<p class="sr-cap">${T('设备', 'Devices')}</p>` + html.filter((h, i) => list[i][0] == 'SRC-IP-CIDR').join('') : '');
+					+ (dev.length ? `<p class="sr-cap">${T('设备', 'Devices')}</p>${dev.slice(0, 3).join('')}`
+						+ (dev.length > 3 ? `<details class="sr-more sr-dev"${open ? ' open' : ''}><summary>${T(`其余 ${dev.length - 3} 台`, `${dev.length - 3} more`)}</summary>${dev.slice(3).join('')}</details>` : '') : '');
 		};
 		box.onclick = ev => {
 			const b = ev.target.closest('button');
@@ -507,7 +508,7 @@ return view.extend({
 		if (name) name.oninput = () => err.hidden = true;
 		const done = () => {
 			const v = name ? clean(name.value) : '';
-			const bad = dir ? '' : !rest && !v ? T('起个名字', 'Give it a name') : !rest && this.taken(v, g) ? T('这个名字已经用过了', 'That name is taken') : !d.m.length ? T('至少选一项节点', 'Choose at least one') : '';
+			const bad = dir ? '' : !rest && !v ? T('请填写名字', 'Give it a name') : !rest && this.taken(v, g) ? T('这个名字已经用过了', 'That name is taken') : !d.m.length ? T('至少选一项节点', 'Choose at least one') : '';
 			if (bad) { err.textContent = bad; err.hidden = false; return err.scrollIntoView({ block: 'nearest' }); }
 			if (rest) {
 				this.rest = { type: d.m.includes('d') ? 'select' : d.type, m: d.m };
